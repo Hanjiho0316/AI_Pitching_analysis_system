@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>투구폼 분석 서비스</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>나의 투구폼은 어떤 선수와 닮았을까?</h1>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="pitching_video">
+            <button type="submit">분석하기</button>
+        </form>
+    </div>
+</body>
+</html>
