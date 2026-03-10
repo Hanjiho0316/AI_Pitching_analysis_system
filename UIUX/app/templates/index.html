@@ -20,10 +20,12 @@
     </style>
 </head>
 <body>
-    <header><div class="logo-text">☰ PitchTypes</div></header>
-    <div class="main-content">
-        <img src="{{ url_for('static', filename='main_logo.png') }}" class="logo-img">
-        <a href="/upload_page" class="go-btn">나의 투구 폼 분석하러 가기 <span>→</span></a>
+    <div class="container">
+        <h1>나의 투구폼은 어떤 선수와 닮았을까?</h1>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="pitching_video">
+            <button type="submit">분석하기</button>
+        </form>
     </div>
 </body>
 </html>
