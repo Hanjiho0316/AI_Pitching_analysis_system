@@ -1,9 +1,41 @@
-from app import create_app
+import os
+from flask import Flask, render_template, request, redirect, url_for
+from werkzeug.utils import secure_filename
+from app.services.video_processor import analyze_user_video
 
-# __init__.py에서 정의한 팩토리 함수로 앱 생성
-app = create_app()
+app = Flask(__name__, 
+            template_folder='app/templates', 
+            static_folder='app/static')
+
+# 업로드 폴더 설정
+UPLOAD_FOLDER = os.path.join('app', 'static', 'uploads')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/upload_page')
+def upload_page():
+    return render_template('upload.html')
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    file = request.files.get('file')
+    if not file or file.filename == '':
+        return redirect(url_for('upload_page'))
+
+    filename = secure_filename(file.filename)
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(save_path)
+    
+    # AI 분석 시작 (뼈대 영상 생성 포함)
+    result_data = analyze_user_video(save_path, filename)
+    
+    return render_template('result.html', 
+                           result=result_data, 
+                           filename=result_data['processed_video'])
 
 if __name__ == '__main__':
-    # host='0.0.0.0' 설정을 통해 같은 와이파이를 쓰는 스마트폰에서도 접속 가능하게 합니다.
-    # 개발 중에는 debug=True로 설정하여 코드 수정 시 서버가 자동 재시작되게 합니다.
-    app.run(port=5000, debug=True)
+    app.run(debug=True, port=5000)
