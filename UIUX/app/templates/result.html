@@ -1,1 +1,147 @@
+<<<<<<< HEAD
 <!--분석 결과 화면 구현-->
+=======
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>PitchTypes - 분석 리포트</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #ffd700; --main-green: #2e7d32; --dark-bg: #121212; }
+        body { background: var(--dark-bg); color: white; font-family: 'Pretendard', sans-serif; margin: 0; padding: 40px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* 헤더 섹션 */
+        .header { text-align: center; margin-bottom: 50px; }
+        .score-badge { background: var(--main-green); padding: 15px 40px; border-radius: 50px; font-size: 2.2rem; font-weight: 900; display: inline-block; box-shadow: 0 10px 20px rgba(46, 125, 50, 0.4); }
+
+        /* 비디오 섹션 */
+        .video-section { display: flex; gap: 25px; margin-bottom: 40px; }
+        .video-card { background: #1e1e1e; padding: 20px; border-radius: 25px; flex: 1; border: 1px solid #333; }
+        video { width: 100%; border-radius: 15px; background: #000; }
+
+        /* 그래프 & 레슨 */
+        .analysis-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-bottom: 50px; }
+        .chart-card { background: white; padding: 30px; border-radius: 25px; color: black; height: 350px; }
+        .lesson-card { background: var(--main-green); padding: 30px; border-radius: 25px; display: flex; flex-direction: column; justify-content: center; }
+
+        /* 📸 [수정] 프리미엄 공유 카드 디자인 - 얼굴 안 잘리게 조정 */
+        .share-section { text-align: center; padding: 60px 0; border-top: 1px solid #333; }
+        #pitch-card { 
+            background: linear-gradient(145deg, #0f172a, #1e293b); 
+            width: 400px; padding: 0; border-radius: 25px; margin: 0 auto 30px; 
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8); 
+            border: 4px solid var(--gold);
+            overflow: hidden; text-align: left;
+        }
+
+        /* 🚨 핵심 수정: 높이를 늘리고 이미지를 상단 정렬 */
+        .card-visual { 
+            position: relative; 
+            width: 100%; 
+            height: 300px; /* 기존 250px에서 300px로 확대 */
+            background: #000; 
+            overflow: hidden; 
+        }
+        
+        .card-player-img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            object-position: center top; /* 🚨 이미지를 위쪽 기준으로 맞춤 (얼굴 고정) */
+        } 
+        
+        .card-score-overlay { 
+            position: absolute; top: 20px; right: 20px; 
+            background: rgba(46, 125, 50, 0.9); padding: 10px 20px; border-radius: 15px;
+            font-weight: 900; font-size: 1.5rem; border: 2px solid var(--gold);
+        }
+
+        .card-body { padding: 25px; }
+        .card-title { font-size: 0.8rem; color: var(--gold); font-weight: 900; letter-spacing: 2px; margin-bottom: 5px; }
+        .card-player-name { font-size: 2rem; font-weight: 900; margin-bottom: 15px; }
+        
+        .card-desc { 
+            background: rgba(255,255,255,0.07); padding: 15px; border-radius: 12px;
+            border-left: 5px solid var(--gold); font-size: 1.05rem; line-height: 1.5; font-weight: 700;
+        }
+
+        .btn-group { display: flex; justify-content: center; gap: 15px; margin-top: 30px; }
+        .btn { padding: 15px 30px; border-radius: 50px; font-weight: 800; border: none; cursor: pointer; transition: 0.3s; }
+        .btn-save { background: #e63946; color: white; }
+        .btn-home { background: white; color: black; text-decoration: none; }
+        
+        .ranking-card { background: #1e1e1e; padding: 30px; border-radius: 25px; border: 1px solid #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="score-badge">{{ result.similarity }}% Match</div>
+        <h1>AI Pitching Analysis Report</h1>
+    </div>
+
+    <div class="video-section">
+        <div class="video-card">
+            <h3>나의 투구 스켈레톤</h3>
+            <video autoplay loop muted playsinline><source src="{{ url_for('static', filename='uploads/' + filename) }}" type="video/mp4"></video>
+        </div>
+        <div class="video-card">
+            <h3>{{ result.match_player }} 선수 분석</h3>
+            <video autoplay loop muted playsinline><source src="{{ url_for('static', filename='images/' + result.player_img) }}" type="video/mp4"></video>
+        </div>
+    </div>
+
+    <div class="analysis-grid">
+        <div class="chart-card">
+            <h3 style="margin-top:0">📉 팔꿈치 각도 변화 대조</h3>
+            <div style="height: 280px;"><canvas id="pitchChart"></canvas></div>
+        </div>
+        <div class="lesson-card">
+            <h2>💡 AI Lesson</h2>
+            <p id="lessonText" style="font-size: 1.1rem; line-height: 1.6;"></p>
+        </div>
+    </div>
+
+    <div class="share-section">
+        <h2>📲 분석 결과 카드 저장</h2>
+        <div id="pitch-card">
+            <div class="card-visual">
+                <div class="card-score-overlay">{{ result.similarity }}%</div>
+            </div>
+            
+            <div class="card-body">
+                <div class="card-title">PITCHTYPES AI REPORT</div>
+                <div class="card-player-name">{{ result.match_player }} TYPE</div>
+                <div class="card-desc">
+                    "안정적인 팔 각도를 가진<br><span style="color:var(--gold);">정교한 피칭 스타일</span>"
+                </div>
+                <div style="margin-top:20px; font-size:0.7rem; opacity:0.5; text-align:right;">Pitching Analysis System v3.0</div>
+            </div>
+        </div>
+        
+        <div class="btn-group">
+            <button onclick="saveCard()" class="btn btn-save">📲 고화질 카드 저장</button>
+            <a href="/" class="btn btn-home">🏠 처음으로</a>
+        </div>
+    </div>
+
+    <div class="ranking-card">
+        <h3>🏆 실시간 유사도 랭킹</h3>
+        <table>
+            <tr><th>순위</th><th>사용자</th><th>선수</th><th>유사도</th></tr>
+            <tr style="color:var(--gold)"><td>1</td><td>형철(나)</td><td>{{ result.match_player }}</td><td>{{ result.similarity }}%</td></tr>
+            <tr><td>2</td><td>강속구왕</td><td>안우진</td><td>92%</td></tr>
+            <tr><td>3</td><td>야구천재</td><td>김제윤</td><td>88%</td></tr>
+        </table>
+    </div>
+</div>
+</body>
+</html>
+>>>>>>> 691c78e7e8c218a664446852ce4fdb01e1e606c8

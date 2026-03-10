@@ -1,1 +1,69 @@
+<<<<<<< HEAD
 <!--영상 업로드 화면 구현-->
+=======
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>분석 시작 - PitchTypes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body { background: #f0f4f8; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: 'Pretendard'; }
+        .card { background: white; padding: 50px; border-radius: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); text-align: center; width: 450px; }
+        .drop-zone { border: 3px dashed #cbd5e0; padding: 60px; border-radius: 30px; background: #f8fafc; cursor: pointer; transition: 0.3s; margin-bottom: 30px; }
+        .drop-zone.dragover { background: #e2e8f0; border-color: #2e7d32; }
+        .btn { background: #2e7d32; color: white; border: none; padding: 20px; width: 100%; border-radius: 60px; font-size: 1.3rem; font-weight: 800; cursor: pointer; }
+        
+        #loading { display: none; margin-top: 20px; }
+        .hourglass { display: inline-block; font-size: 60px; animation: flip 2s infinite; }
+        @keyframes flip { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(180deg); } }
+        .timer-text { font-size: 1.2rem; color: #2e7d32; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>⚾ 분석 파일 선택</h1>
+        <form id="uploadForm" action="/upload" method="POST" enctype="multipart/form-data">
+            <div id="dropZone" class="drop-zone">
+                <span id="fileName">영상을 이쪽으로 끌어오세요<br>(또는 클릭)</span>
+                <input type="file" name="file" id="fileInput" style="display:none" accept="video/*">
+            </div>
+            <button type="submit" class="btn">AI 분석 가동하기</button>
+        </form>
+        <div id="loading">
+            <div class="hourglass">⏳</div>
+            <div class="timer-text">분석 중... <span id="timer">00분 00초</span></div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileNameDisp = document.getElementById('fileName');
+
+        dropZone.onclick = () => fileInput.click();
+        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
+        dropZone.ondragleave = () => dropZone.classList.remove('dragover');
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            fileInput.files = e.dataTransfer.files;
+            fileNameDisp.innerText = e.dataTransfer.files[0].name;
+        };
+        fileInput.onchange = () => { if(fileInput.files.length) fileNameDisp.innerText = fileInput.files[0].name; };
+
+        document.getElementById('uploadForm').onsubmit = function() {
+            document.querySelector('.btn').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            let sec = 0;
+            setInterval(() => {
+                sec++;
+                const m = String(Math.floor(sec/60)).padStart(2,'0');
+                const s = String(sec%60).padStart(2,'0');
+                document.getElementById('timer').innerText = `${m}분 ${s}초`;
+            }, 1000);
+        };
+    </script>
+</body>
+</html>
+>>>>>>> 691c78e7e8c218a664446852ce4fdb01e1e606c8

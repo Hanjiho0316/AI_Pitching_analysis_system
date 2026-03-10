@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% extends 'base.html' %}
 
 {% block content %}
@@ -17,3 +18,36 @@
     </section>
 </main>
 {% endblock %}
+=======
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>PitchTypes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; font-family: 'Pretendard'; background: white; }
+        header { display: flex; justify-content: space-between; padding: 20px 50px; align-items: center; border-bottom: 1px solid #eee; }
+        .logo-text { font-size: 1.5rem; font-weight: 700; color: #333; }
+        .main-content { height: 80vh; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .logo-img { width: 300px; margin-bottom: 40px; }
+        .go-btn {
+            display: flex; align-items: center; justify-content: space-between;
+            width: 350px; padding: 18px 40px; border: 2px solid #333;
+            border-radius: 60px; text-decoration: none; color: #333;
+            font-size: 1.2rem; font-weight: 700; transition: 0.3s;
+        }
+        .go-btn:hover { background: #333; color: white; transform: translateY(-5px); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>나의 투구폼은 어떤 선수와 닮았을까?</h1>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="pitching_video">
+            <button type="submit">분석하기</button>
+        </form>
+    </div>
+</body>
+</html>
+>>>>>>> 691c78e7e8c218a664446852ce4fdb01e1e606c8

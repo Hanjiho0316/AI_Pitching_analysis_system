@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -34,3 +35,5 @@ def create_app():
     app.register_blueprint(api_bp, url_prefix='/api')
 
     return app
+=======
+>>>>>>> 691c78e7e8c218a664446852ce4fdb01e1e606c8
