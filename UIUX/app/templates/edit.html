@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="auth-container">
+    <h2 class="auth-title">프로필 정보 수정</h2>
+    
+    <form action="{{ url_for('auth.edit_profile') }}" method="post" enctype="multipart/form-data" class="auth-form">
+        <div style="margin-bottom: 1.5rem;">
+            <img src="{{ url_for('static', filename='images/' + current_user.profile_image) }}" 
+                 style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); margin-bottom: 10px;">
+            <div style="text-align: left;">
+                <label for="profile_image" style="color: var(--text-secondary); font-size: 0.9rem; display: block; margin-bottom: 5px;">프로필 이미지 변경</label>
+                <input type="file" name="profile_image" id="profile_image" accept="image/*" style="width: 100%; padding: 0.5rem;">
+            </div>
+        </div>
+
+        <div style="text-align: left; margin-bottom: 1.5rem;">
+            <label for="nickname" style="color: var(--text-secondary); font-size: 0.9rem; display: block; margin-bottom: 5px;">닉네임</label>
+            <input type="text" name="nickname" id="nickname" value="{{ current_user.nickname }}" required style="width: 100%;">
+        </div>
+        
+        <button type="submit" class="submit-button">수정 완료</button>
+    </form>
+    
+    <div style="margin-top: 1.5rem;">
+        <a href="{{ url_for('main.mypage', nickname=current_user.nickname) }}" style="color: var(--text-secondary); text-decoration: none; border-bottom: 1px solid var(--text-secondary);">취소하고 돌아가기</a>
+    </div>
+</div>
+{% endblock %}

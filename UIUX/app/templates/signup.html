@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="auth-container">
+    <h2 class="auth-title">회원가입</h2>
+    
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul style="list-style: none; padding: 0; color: #d9534f; margin-bottom: 15px; font-size: 0.9rem;">
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <form action="{{ url_for('auth.signup') }}" method="post" class="auth-form">
+        <div style="display: flex; flex-direction: column; text-align: left;">
+            <input type="email" name="email" id="email" placeholder="이메일 주소를 입력하세요" required>
+            <span id="email-feedback" style="font-size: 0.8rem; margin-top: 5px; min-height: 15px;"></span>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; text-align: left; margin-top: 10px;">
+            <input type="text" name="nickname" id="nickname" placeholder="사용하실 닉네임을 입력하세요" required>
+            <span id="nickname-feedback" style="font-size: 0.8rem; margin-top: 5px; min-height: 15px;"></span>
+        </div>
+        
+        <div style="margin-top: 10px;">
+            <input type="password" name="password" placeholder="비밀번호를 입력하세요" required style="width: 100%;">
+        </div>
+        
+        <button type="submit" class="submit-button">가입하기</button>
+    </form>
+    
+    <div class="auth-footer">
+        <span>이미 계정이 있으신가요?</span>
+        <a href="{{ url_for('auth.login') }}">로그인</a>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const nicknameInput = document.getElementById('nickname');
+    const nicknameFeedback = document.getElementById('nickname-feedback');
+    const emailInput = document.getElementById('email');
+    const emailFeedback = document.getElementById('email-feedback');
+
+    nicknameInput.addEventListener('blur', function() {
+        const nickname = this.value.trim();
+        if (nickname.length === 0) {
+            nicknameFeedback.textContent = '';
+            return;
+        }
+
+        fetch('/api/check-nickname', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nickname: nickname })
+        })
+        .then(response => response.json())
+        .then(data => {
+            nicknameFeedback.textContent = data.message;
+            if (data.is_duplicate) {
+                nicknameFeedback.style.color = '#d9534f'; // 경고색 (빨간색)
+                nicknameInput.value = '';
+                nicknameInput.focus();
+            } else {
+                nicknameFeedback.style.color = '#5cb85c'; // 통과색 (초록색)
+            }
+        });
+    });
+
+    emailInput.addEventListener('blur', function() {
+        const email = this.value.trim();
+        if (email.length === 0) {
+            emailFeedback.textContent = '';
+            return;
+        }
+
+        fetch('/api/check-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email })
+        })
+        .then(response => response.json())
+        .then(data => {
+            emailFeedback.textContent = data.message;
+            if (data.is_duplicate) {
+                emailFeedback.style.color = '#d9534f';
+                emailInput.value = '';
+                emailInput.focus();
+            } else {
+                emailFeedback.style.color = '#5cb85c';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

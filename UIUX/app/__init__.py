@@ -1,23 +1,36 @@
 from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
 import os
 
+db = SQLAlchemy()
+
+# LoginManager 인스턴스 생성
+login_manager = LoginManager()
+login_manager.login_view = 'auth.login'
+login_manager.login_message = '로그인이 필요한 서비스입니다.'
+
 def create_app():
-    # Flask 인스턴스 생성
     app = Flask(__name__)
     
-    # 업로드 및 결과 저장 경로 설정
-    app.config['UPLOAD_FOLDER'] = os.path.join('app', 'static', 'uploads')
-    app.config['RESULT_FOLDER'] = os.path.join('app', 'static', 'results')
+    # config.py 파일의 Config 클래스 내용을 불러와 적용합니다.
+    app.config.from_object('config.Config')
     
-    # 보안을 위한 최대 업로드 용량 제한 (예: 32MB)
-    app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024
-    
-    # 필요한 폴더가 없을 경우 자동 생성
+    # 폴더 자동 생성 로직
+    import os
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     os.makedirs(app.config['RESULT_FOLDER'], exist_ok=True)
+    
+    db.init_app(app)
+    login_manager.init_app(app)
 
-    # 블루프린트(라우팅 설정) 등록
-    from .routes import main_bp
+    from app.models import user, analysis
+    from app.routes.main import main_bp
+    from app.routes.auth import auth_bp
+    from app.routes.api import api_bp
+
     app.register_blueprint(main_bp)
+    app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.register_blueprint(api_bp, url_prefix='/api')
 
     return app

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<main class="main-container">
+    <section style="text-align: center; margin-bottom: 3rem; padding-top: 2rem;">
+        <div style="margin-bottom: 1.5rem;">
+            <img src="{{ url_for('static', filename='images/' + current_user.profile_image) }}" 
+                 style="width: 110px; height: 110px; border-radius: 50%; border: 1px solid var(--border-color); object-fit: cover;">
+        </div>
+        <h2 style="font-weight: 400; font-size: 1.6rem; color: var(--text-primary);">{{ nickname }} 사용자님</h2>
+        <p style="color: var(--text-secondary); font-size: 1rem; margin-top: 0.5rem;">{{ current_user.email }}</p>
+    </section>
+
+    <section style="max-width: 500px; width: 100%; margin: 0 auto 3rem auto;">
+        <h3 style="font-weight: 400; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 20px; color: var(--text-primary);">최근 분석 기록</h3>
+        <div style="color: var(--text-secondary); text-align: center; padding: 50px 0; background-color: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+            아직 분석 기록이 없습니다.
+        </div>
+    </section>
+
+    <section style="max-width: 500px; width: 100%; margin: 0 auto;">
+        <h3 style="font-weight: 400; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 20px; color: var(--text-primary);">계정 관리</h3>
+        <div class="account-actions">
+            <a href="{{ url_for('auth.edit_profile') }}" class="btn-account">프로필 정보 수정</a>
+            <a href="{{ url_for('auth.change_password') }}" class="btn-account">비밀번호 변경</a>
+            <form action="{{ url_for('auth.delete_account') }}" method="POST" style="margin: 0;" onsubmit="return confirm('정말 탈퇴하시겠습니까? 모든 분석 기록이 영구적으로 삭제됩니다.');">
+                <button type="submit" class="btn-danger-outline">회원 탈퇴</button>
+            </form>
+        </div>
+    </section>
+</main>
+{% endblock %}

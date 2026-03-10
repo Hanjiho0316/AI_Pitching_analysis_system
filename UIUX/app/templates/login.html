@@ -1,0 +1,17 @@
+<!--로그인 화면 구현-->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="auth-container">
+    <h2 class="auth-title">로그인</h2>
+    <form action="{{ url_for('auth.login') }}" method="post" class="auth-form">
+        <input type="email" name="email" placeholder="이메일" required>
+        <input type="password" name="password" placeholder="비밀번호" required>
+        <button type="submit" class="submit-button">로그인</button>
+    </form>
+    <div class="auth-footer">
+        <span>아직 회원이 아니신가요?</span>
+        <a href="{{ url_for('auth.signup') }}">회원가입</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,40 +1,19 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PitchTypes - 나의 투구폼 분석</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-</head>
-<body>
-    <header class="navbar">
-        <div class="nav-left">
-            <div class="menu-icon">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-            <span class="brand-name">PitchTypes</span>
-        </div>
-        <div class="nav-right">
-            <a href="#" class="nav-link">가입/로그인</a>
-        </div>
-    </header>
+{% extends 'base.html' %}
 
-    <main class="main-container">
-        <section class="logo-section">
-            <img src="{{ url_for('static', filename='images/pitchtypes_logo.jpg') }}" alt="PitchTypes Logo" class="main-logo">
-        </section>
+{% block content %}
+<main class="main-container">
+    <section class="logo-section" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+        <h2 style="font-size: 1.4rem; color: var(--text-primary); margin-bottom: 1.5rem; font-weight: 400; word-break: keep-all;">나의 투구 폼은 어떤 선수와 가장 비슷할까?</h2>
+        <img src="{{ url_for('static', filename='images/pitchtypes_logo.png') }}" alt="PitchTypes Logo" class="main-logo">
+    </section>
 
-        <section class="cta-section">
-            <a href="/upload" class="analysis-button">
-                <span>나의 투구 폼 분석하러 가기</span>
-                <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </a>
-        </section>
-    </main>
-</body>
-</html>
+    <section class="cta-section">
+        <a href="{{ url_for('main.upload') }}" class="analysis-button">
+            <span style="color: var(--text-primary);">나의 투구 폼 분석하러 가기</span>
+            <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </a>
+    </section>
+</main>
+{% endblock %}
