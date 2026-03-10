@@ -18,6 +18,7 @@ instance/
 UIUX/ml_models/*.pt
 UIUX/ml_models/*.h5
 UIUX/ml_models/*.weights
+UIUX/ml_models/*.pkl
 UIUX/data/*.csv
 UIUX/data/*.json
 !data/.gitkeep
