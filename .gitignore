@@ -15,11 +15,11 @@ instance/
 .pytest_cache/
 
 # 머신러닝 모델 및 데이터
-ml_models/*.pt
-ml_models/*.h5
-ml_models/*.weights
-data/*.csv
-data/*.json
+UIUX/ml_models/*.pt
+UIUX/ml_models/*.h5
+UIUX/ml_models/*.weights
+UIUX/data/*.csv
+UIUX/data/*.json
 !data/.gitkeep
 
 # 사용자 업로드 파일 및 분석 결과
