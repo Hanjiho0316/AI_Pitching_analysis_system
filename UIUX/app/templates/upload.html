@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>분석 시작 - PitchTypes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #ffffff; color: #333; font-family: 'Pretendard', sans-serif; text-align: center; padding-top: 80px; margin: 0; }
+        
+        h2 { font-size: 2.2rem; font-weight: 700; color: #111; margin-bottom: 10px; }
+        p.sub-text { color: #666; font-size: 1.1rem; margin-bottom: 50px; }
+
+        /* 드래그 앤 드롭 컨테이너 */
+        .upload-container {
+            width: 85%; max-width: 700px; margin: 0 auto;
+            border: 2px dashed #0ea5e9; border-radius: 24px;
+            padding: 80px 30px; background-color: #f8fafc;
+            display: flex; flex-direction: column; align-items: center;
+            cursor: pointer; transition: all 0.3s ease;
+            position: relative;
+        }
+
+        /* 드래그 중일 때 스타일 */
+        .upload-container.dragover {
+            border-color: #2563eb;
+            background-color: #e0f2fe;
+            transform: scale(1.02);
+        }
+
+        .upload-icon { font-size: 3rem; margin-bottom: 20px; }
+        .upload-text { font-size: 1.1rem; color: #475569; margin-bottom: 10px; }
+        .file-name { color: #2563eb; font-weight: bold; margin-top: 15px; display: none; }
+
+        /* 실제 파일 인풋은 숨김 */
+        #video_file { display: none; }
+
+        .button-group { display: flex; flex-direction: column; gap: 15px; width: 280px; margin-top: 40px; }
+
+        /* 분석 가동 버튼 */
+        .btn-submit {
+            background-color: #f06292; color: #fff; border: none;
+            padding: 18px; font-size: 1.2rem; font-weight: bold;
+            border-radius: 12px; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 4px 14px rgba(240, 98, 146, 0.3);
+        }
+        .btn-submit:hover { background-color: #e91e63; transform: translateY(-2px); }
+
+        /* 처음으로 돌아가기 버튼 */
+        .btn-home {
+            color: #666; text-decoration: none; font-size: 1rem;
+            padding: 12px; border: 1.5px solid #ddd;
+            border-radius: 12px; transition: 0.3s; font-weight: 500;
+        }
+        .btn-home:hover { background-color: #f8f8f8; color: #111; }
+    </style>
+</head>
+<body>
+    <h2>🚀 AI 분석을 시작합니다</h2>
+    <p class="sub-text">동영상을 드래그하거나 클릭하여 업로드하세요.</p>
+
+    <form action="/upload" method="POST" enctype="multipart/form-data" id="upload-form">
+        <div class="upload-container" id="drop-zone">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">파일을 이 곳으로 드래그하거나 <b>클릭</b>하세요</div>
+            <p style="color: #94a3b8; font-size: 0.9rem;">MP4, MOV 또는 이미지 파일 가능</p>
+            
+            <input type="file" name="video_file" id="video_file" accept="video/mp4,video/quicktime,image/*" required>
+            
+            <div id="file-name-display" class="file-name"></div>
+        </div>
+        
+        <div class="button-group" style="margin-left: auto; margin-right: auto;">
+            <button type="submit" class="btn-submit">AI 분석 가동하기 🔥</button>
+            <a href="{{ url_for('index') }}" class="btn-home">⬅️ 처음으로 돌아가기</a>
+        </div>
+    </form>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('video_file');
+        const fileNameDisplay = document.getElementById('file-name-display');
+
+        // 1. 클릭하면 파일 선택창 띄우기
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // 2. 파일이 선택되었을 때 이름 표시
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                fileNameDisplay.innerText = "선택된 파일: " + fileInput.files[0].name;
+                fileNameDisplay.style.display = 'block';
+            }
+        });
+
+        // 3. 드래그 앤 드롭 효과
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            
+            // 드롭된 파일을 input에 넣어주기
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                fileNameDisplay.innerText = "드롭된 파일: " + files[0].name;
+                fileNameDisplay.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

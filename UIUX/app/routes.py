@@ -1,40 +1,43 @@
-from flask import Blueprint, render_template, request, redirect, url_for, current_app
+# app/routes.py
 import os
-from werkzeug.utils import secure_filename
+from flask import render_template, request, redirect, url_for, flash
+from app import app
+from app.services.video_processor import analyze_user_video
 
-# 블루프린트 생성
-main_bp = Blueprint('main', __name__)
+# 업로드된 영상이 저장될 폴더 (폴더가 없으면 알아서 만듦)
+UPLOAD_FOLDER = 'app/static/uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-@main_bp.route('/')
+# 🏠 메인 홈 화면 (Pitch Types 대문)
+@app.route('/')
 def index():
-    # 메인 화면(콘티로 그려주신 페이지)을 보여줍니다.
     return render_template('index.html')
 
-@main_bp.route('/upload', methods=['GET', 'POST'])
+# 📤 업로드 및 분석 화면
+@app.route('/upload', methods=['GET', 'POST'])
 def upload():
     if request.method == 'POST':
-        # 파일이 전송되었는지 확인
-        if 'pitching_video' not in request.files:
-            return redirect(request.url)
-        
-        file = request.files['pitching_video']
-        if file.filename == '':
+        # 1. 파일이 제대로 들어왔는지 확인
+        if 'video_file' not in request.files:
+            flash('파일이 없습니다.')
             return redirect(request.url)
             
+        file = request.files['video_file']
+        if file.filename == '':
+            flash('선택된 파일이 없습니다.')
+            return redirect(request.url)
+            
+        # 2. 파일 저장 후 AI 분석기 가동!
         if file:
-            # 안전한 파일명으로 변경 후 저장
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
             file.save(filepath)
             
-            # 이 부분에서 나중에 'services/analyzer.py'의 함수를 호출하여
-            # 모델 분석을 수행하게 됩니다. 현재는 결과 페이지로 바로 이동합니다.
-            return redirect(url_for('main.result'))
+            # 3. services/video_processor.py 에 있는 AI 함수 실행
+            result_data = analyze_user_video(filepath)
             
-    # GET 방식 접근 시에는 인덱스로 보내거나 별도의 업로드 폼을 보여줄 수 있습니다.
-    return render_template('index.html')
-
-@main_bp.route('/result')
-def result():
-    # 분석이 완료된 후 결과 데이터를 result.html에 전달하여 보여줍니다.
-    return render_template('result.html')
+            # 4. 분석 결과(result_data)를 들고 결과 화면으로 이동
+            return render_template('result.html', result=result_data, filename=file.filename)
+            
+    # GET 방식(처음 들어왔을 때)은 업로드 화면 보여주기
+    return render_template('upload.html')

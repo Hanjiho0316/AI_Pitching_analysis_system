@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>분석 결과 - PitchTypes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;800&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #121212; color: #fff; font-family: 'Pretendard', sans-serif; text-align: center; padding: 50px 20px; }
+        .result-container { max-width: 800px; margin: 0 auto; }
+        
+        /* 메인 결과 카드 */
+        .result-card { background-color: #1a1a1a; border-radius: 30px; padding: 40px; border: 2px solid #333; margin-bottom: 30px; }
+        .score { font-size: 4rem; font-weight: 800; color: #f06292; margin: 20px 0; }
+        
+        /* 선수 매칭 카드 */
+        .match-section { display: flex; justify-content: space-around; margin-top: 40px; }
+        .match-card { background-color: #252525; padding: 20px; border-radius: 20px; width: 45%; }
+        .player-img { width: 150px; height: 180px; background-color: #333; border-radius: 15px; margin: 0 auto 15px; overflow: hidden; }
+        .player-img img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .status-badge { display: inline-block; padding: 8px 20px; border-radius: 50px; background-color: #f06292; font-weight: bold; margin-bottom: 20px; }
+        .btn-back { display: inline-block; margin-top: 50px; color: #999; text-decoration: none; border: 1px solid #444; padding: 10px 30px; border-radius: 30px; }
+    </style>
+</head>
+<body>
+    <div class="result-container">
+        <div class="status-badge">AI 분석 결과</div>
+        <h1>당신의 투구 폼은 <span style="color:#4fc3f7;">'에릭 페디'</span>와 가장 닮았습니다!</h1>
+        
+        <div class="result-card">
+            <p>투구 폼 유사도</p>
+            <div class="score">{{ result.x_factor + 30 }}%</div> <p style="color:#ccc;">"상하체 꼬임(X-Factor)이 매우 이상적입니다."</p>
+        </div>
+
+        <div class="match-section">
+            <div class="match-card">
+                <p>나의 스켈레톤</p>
+                <div class="player-img">
+                   <p style="padding-top:70px; color:#666;">추출 영상</p>
+                </div>
+                <p>USER</p>
+            </div>
+            <div class="match-card">
+                <p>닮은꼴 프로선수</p>
+                <div class="player-img">
+                    <img src="https://i.namu.wiki/i/7G...png" alt="Player">
+                </div>
+                <p>에릭 페디 (NC)</p>
+            </div>
+        </div>
+
+        <a href="/" class="btn-back">처음으로 돌아가기</a>
+    </div>
+</body>
+</html>

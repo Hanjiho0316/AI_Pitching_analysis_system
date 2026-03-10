@@ -3,38 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PitchTypes - 나의 투구폼 분석</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <title>PitchTypes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; background-color: #fff; }
+        
+        /* 네비게이션 바 */
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; border-bottom: 1px solid #eee; }
+        .nav-logo { font-size: 1.5rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; }
+        .nav-logo span { margin-right: 10px; }
+        .nav-login { font-size: 0.9rem; color: #666; cursor: pointer; }
+
+        /* 중앙 컨텐츠 */
+        .container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; }
+        
+        .main-card { width: 500px; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 50px; }
+        .main-card img { width: 100%; border-radius: 15px; }
+
+        /* 버튼 스타일 */
+        .btn-start {
+            display: flex; justify-content: space-between; align-items: center;
+            width: 500px; padding: 15px 30px; border: 1.5px solid #333; border-radius: 40px;
+            text-decoration: none; color: #333; font-weight: 600; font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+        .btn-start:hover { background-color: #f8f8f8; transform: translateY(-2px); }
+        .btn-start span.arrow { font-size: 1.5rem; }
+    </style>
 </head>
 <body>
-    <header class="navbar">
-        <div class="nav-left">
-            <div class="menu-icon">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-            <span class="brand-name">PitchTypes</span>
-        </div>
-        <div class="nav-right">
-            <a href="#" class="nav-link">가입/로그인</a>
-        </div>
-    </header>
+    <nav class="navbar">
+        <div class="nav-logo">☰ PitchTypes</div>
+        <div class="nav-login">가입/로그인</div>
+    </nav>
 
-    <main class="main-container">
-        <section class="logo-section">
-            <img src="{{ url_for('static', filename='images/pitchtypes_logo.jpg') }}" alt="PitchTypes Logo" class="main-logo">
-        </section>
+    <div class="container">
+        <div class="main-card">
+            <img src="{{ url_for('static', filename='images/main_logo.png') }}" alt="Pitchers Logo">
+        </div>
 
-        <section class="cta-section">
-            <a href="/upload" class="analysis-button">
-                <span>나의 투구 폼 분석하러 가기</span>
-                <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </a>
-        </section>
-    </main>
+        <a href="/upload" class="btn-start">
+            <span>나의 투구 폼 분석하러 가기</span>
+            <span class="arrow">→</span>
+        </a>
+    </div>
 </body>
 </html>
