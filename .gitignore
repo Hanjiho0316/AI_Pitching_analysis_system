@@ -23,10 +23,11 @@ data/*.json
 !data/.gitkeep
 
 # 사용자 업로드 파일 및 분석 결과
-app/static/uploads/*
-!app/static/uploads/.gitkeep
-app/static/results/*
-!app/static/results/.gitkeep
+UIUX/app/static/uploads/*
+UIUX/app/static/images/*
+!UIUX/app/static/uploads/.gitkeep
+UIUX/app/static/results/*
+!UIUX/app/static/results/.gitkeep
 
 # OS 및 에디터 관련
 .DS_Store
