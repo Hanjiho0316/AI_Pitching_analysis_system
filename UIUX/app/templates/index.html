@@ -2,16 +2,39 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>투구폼 분석 서비스</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PitchTypes - 나의 투구폼 분석</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 </head>
 <body>
-    <div class="container">
-        <h1>나의 투구폼은 어떤 선수와 닮았을까?</h1>
-        <form action="/upload" method="post" enctype="multipart/form-data">
-            <input type="file" name="pitching_video">
-            <button type="submit">분석하기</button>
-        </form>
-    </div>
+    <header class="navbar">
+        <div class="nav-left">
+            <div class="menu-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <span class="brand-name">PitchTypes</span>
+        </div>
+        <div class="nav-right">
+            <a href="#" class="nav-link">가입/로그인</a>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <section class="logo-section">
+            <img src="{{ url_for('static', filename='images/pitchtypes_logo.jpg') }}" alt="PitchTypes Logo" class="main-logo">
+        </section>
+
+        <section class="cta-section">
+            <a href="/upload" class="analysis-button">
+                <span>나의 투구 폼 분석하러 가기</span>
+                <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+        </section>
+    </main>
 </body>
 </html>
