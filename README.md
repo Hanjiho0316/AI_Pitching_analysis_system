@@ -7,33 +7,41 @@
 깃허브에 왜 빈 디렉토리 안올라감;;;
 ```
 pitching_project/UI/UX
-├── app.py  
-├── config.py
-├── requirements.txt
+├── app.py                  # 웹 실행
+├── config.py               # 설정값 저장
+├── requirements.txt        # 의존성 목록
 ├── app/
 │   ├── __init__.py
-│   ├── routes.py
+│   ├── routes/
+│   │   ├── api.py          # api 호출 라우터
+│   │   ├── auth.py         # 인증 관련 라우터
+│   │   └── main.py         # 메인 라우터
 │   ├── models/
+│   │   ├── analysis.py     # 분석 결과 데이터베이스 모델
+│   │   └── user.py         # 사용자 데이터베이스 모델   
 │   ├── services/
-│   │   ├── video_processor.py
-│   │   └── analyzer.py
+│   │   ├── ...
+│   │   └── ...
 │   ├── static/
-│   │   ├── css/
-│   │   ├── js/
-│   │   ├── uploads/
-│   │   └── results/
+│   │   ├── css/            # 스타일 시트
+│   │   ├── images/         # 웹 이미지 파일 저장
+│   │   ├── uploads/        
+│   │   │   ├── profiles/   # 사용자 프로필 이미지 저장
+│   │   │   └── videos/     # 사용자 업로드 비디오 저장
+│   │   └── results/        # 사용자 분석 결과 이미지 저장
 │   └── templates/
-│       ├── index.html
-│       ├── base.html
-│       ├── login.html
-│       ├── mypage.html
-│       ├── ranking.html
-│       ├── result.html
-│       ├── signup.html
-│       ├── upload.html
-│       ├── ...
-│       └── ...
-├── ml_models/
+│       ├── base.html       # 부모 HTML 파일 (nav, sidebar, ...)
+│       ├── battle.html     # 투구 폼 대결 화면
+│       ├── edit.html       # 사용자 정보 수정 화면
+│       ├── index.html      # 메인 화면
+│       ├── login.html      # 로그인 화면
+│       ├── mypage.html     # 마이페이지 화면
+│       ├── ranking.html    # 랭킹 화면
+│       ├── result.html     # 분석 결과 화면
+│       ├── settings.html   # 설정 화면
+│       ├── signup.html     # 회원가입 화면
+│       └── upload.html     # 영상 업로드 화면
+├── ml_models/              # 모델 저장 디렉토리
 └── data/
 ```
 
@@ -82,10 +90,5 @@ pitching_project/UI/UX
 4. 저장이랑 공유 기능?
 
 # TODO LIST 2
-1. 큰형님이 할 일: 업로드 화면, 결과 화면
-2. 가기 전에 커밋하면 큰형님꺼랑 병합하기
-3. 나중에 할 일: 메인화면 좌측 플로팅 바 만들기 (마이페이지, 환경설정 -> 라이트/다크 테마 설정)
-4. 모델 받으면 돌아가게끔 코드 추가하기
-5. 폰트 좀 예쁜걸로 바꾸기
+1. 큰형님이 할 일: 
 6. 배포할 때: Nginx, CasaOS 등... (참고)
-7. 아.. 병원이오.. 안심할수가 없어요..!
