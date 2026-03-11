@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, current_app, flash
 from flask_login import login_required, current_user
-import os
+from app.services.ml_service import get_task_status
 from werkzeug.utils import secure_filename
+import os
 
 main_bp = Blueprint('main', __name__)
 
@@ -9,27 +10,31 @@ main_bp = Blueprint('main', __name__)
 def index():
     return render_template('index.html')
 
-@main_bp.route('/upload', methods=['GET', 'POST'])
+@main_bp.route('/upload')
 def upload():
-    if request.method == 'POST':
-        if 'pitching_video' not in request.files:
-            return redirect(request.url)
-        
-        file = request.files['pitching_video']
-        if file.filename == '':
-            return redirect(request.url)
-            
-        if file:
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-            return redirect(url_for('main.result'))
-            
-    return render_template('index.html')
+    return render_template('upload.html')
 
 @main_bp.route('/result')
 def result():
-    return render_template('result.html')
+    task_id = request.args.get('task_id')
+    
+    if not task_id:
+        flash('잘못된 접근입니다.')
+        return redirect(url_for('main.index'))
+        
+    task_info = get_task_status(task_id)
+    
+    if task_info['status'] != 'completed':
+        flash('분석이 아직 완료되지 않았거나 찾을 수 없습니다.')
+        return redirect(url_for('main.index'))
+        
+    analysis_result = task_info['result']
+    filename = os.path.basename(task_info['filepath'])
+
+    if analysis_result['similarity'] < 40.0:
+        return render_template('failure.html')
+    
+    return render_template('result.html', result=analysis_result, filename=filename)
 
 @main_bp.route('/ranking')
 def ranking():

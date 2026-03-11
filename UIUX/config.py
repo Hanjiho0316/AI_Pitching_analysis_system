@@ -17,3 +17,5 @@ class Config:
     
     # 업로드 가능한 최대 파일 용량 제한 (32MB)
     MAX_CONTENT_LENGTH = 32 * 1024 * 1024
+
+    

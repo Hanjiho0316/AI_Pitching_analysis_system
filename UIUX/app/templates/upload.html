@@ -33,33 +33,87 @@
         </div>
     </div>
 
-    <script>
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        const fileNameDisp = document.getElementById('fileName');
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileNameDisp = document.getElementById('fileName');
 
-        dropZone.onclick = () => fileInput.click();
-        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
-        dropZone.ondragleave = () => dropZone.classList.remove('dragover');
-        dropZone.ondrop = (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
+    dropZone.onclick = () => fileInput.click();
+    dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
+    dropZone.ondragleave = () => dropZone.classList.remove('dragover');
+    dropZone.ondrop = (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
             fileInput.files = e.dataTransfer.files;
             fileNameDisp.innerText = e.dataTransfer.files[0].name;
-        };
-        fileInput.onchange = () => { if(fileInput.files.length) fileNameDisp.innerText = fileInput.files[0].name; };
+        }
+    };
+    fileInput.onchange = () => { 
+        if(fileInput.files.length) fileNameDisp.innerText = fileInput.files[0].name; 
+    };
 
-        document.getElementById('uploadForm').onsubmit = function() {
-            document.querySelector('.btn').style.display = 'none';
-            document.getElementById('loading').style.display = 'block';
-            let sec = 0;
-            setInterval(() => {
-                sec++;
-                const m = String(Math.floor(sec/60)).padStart(2,'0');
-                const s = String(sec%60).padStart(2,'0');
-                document.getElementById('timer').innerText = `${m}분 ${s}초`;
-            }, 1000);
-        };
-    </script>
+    document.getElementById('uploadForm').onsubmit = async function(e) {
+        e.preventDefault(); // 폼의 기본 페이지 이동 동작을 막습니다.
+        
+        if (!fileInput.files.length) {
+            alert('영상을 먼저 선택해주세요.');
+            return;
+        }
+
+        document.querySelector('.btn').style.display = 'none';
+        document.getElementById('loading').style.display = 'block';
+        
+        let sec = 0;
+        const timerInterval = setInterval(() => {
+            sec++;
+            const m = String(Math.floor(sec/60)).padStart(2,'0');
+            const s = String(sec%60).padStart(2,'0');
+            document.getElementById('timer').innerText = `${m}분 ${s}초`;
+        }, 1000);
+
+        const formData = new FormData();
+        formData.append('pitching_video', fileInput.files[0]);
+
+        try {
+            // API 라우트로 비동기 전송을 시작합니다.
+            const response = await fetch('/api/upload_async', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            
+            if (data.task_id) {
+                checkTaskStatus(data.task_id, timerInterval);
+            } else {
+                alert('업로드 중 오류가 발생했습니다.');
+                clearInterval(timerInterval);
+            }
+        } catch (error) {
+            alert('서버와의 통신에 실패했습니다.');
+            clearInterval(timerInterval);
+        }
+    };
+
+    function checkTaskStatus(taskId, timerInterval) {
+        // 3초마다 서버에 작업이 끝났는지 물어봅니다.
+        const statusInterval = setInterval(async () => {
+            const response = await fetch(`/api/status/${taskId}`);
+            const data = await response.json();
+
+            if (data.status === 'completed') {
+                clearInterval(statusInterval);
+                clearInterval(timerInterval);
+                // 분석이 끝나면 결과 페이지로 이동하며 task_id를 전달합니다.
+                window.location.href = `/result?task_id=${taskId}`;
+            } else if (data.status === 'error') {
+                clearInterval(statusInterval);
+                clearInterval(timerInterval);
+                alert('분석 중 오류가 발생했습니다.');
+                window.location.href = '/';
+            }
+        }, 3000);
+    }
+</script>
 </body>
 </html>
