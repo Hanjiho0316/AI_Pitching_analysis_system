@@ -65,7 +65,7 @@ def edit_profile():
         flash('정보가 성공적으로 수정되었습니다.')
         return redirect(url_for('main.mypage', nickname=current_user.nickname))
         
-    return render_template('edit_profile.html')
+    return render_template('edit.html')
 
 @auth_bp.route('/delete-account', methods=['POST'])
 @login_required
