@@ -1,3 +1,6 @@
+####
+## 좌투 우투 변경용 코드
+####
 import pandas as pd
 import os
 import glob

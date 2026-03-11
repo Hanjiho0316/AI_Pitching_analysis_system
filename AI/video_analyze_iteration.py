@@ -1,3 +1,6 @@
+####
+## 자동 클립 생성용 코드
+####
 from video_extract_interpolation import analyze_pitcher_video
 
 import os

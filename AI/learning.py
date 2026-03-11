@@ -39,16 +39,16 @@ if gpus:
 # 1. 설정 및 하이퍼파라미터
 # ==============================
 DATA_ROOT = r"C:\Users\kccistc\Desktop\workspace\project\dataset" 
-MAX_FRAMES = 80  
+MAX_FRAMES = 60
 NUM_JOINTS = 13
 CHANNELS = 6 
-BATCH_SIZE = 128
-EPOCHS = 1000
+BATCH_SIZE = 64
+EPOCHS = 3000
 K_FOLDS = 5
 MODEL_SAVE_DIR = "saved_models"
 LOG_DIR = "logs"
 
-USE_AUGMENTATION = True 
+USE_AUGMENTATION = True
 
 if not os.path.exists(MODEL_SAVE_DIR): os.makedirs(MODEL_SAVE_DIR)
 if not os.path.exists(LOG_DIR): os.makedirs(LOG_DIR)
@@ -62,7 +62,7 @@ def augment_pitching_data_hard(X, y):
     augmented_X, augmented_y = [X], [y]
 
     # 1. 가우시안 노이즈
-    noise = np.random.normal(0, 0.025, X.shape).astype('float32')
+    noise = np.random.normal(0, 0.015, X.shape).astype('float32')
     augmented_X.append(X + noise)
     augmented_y.append(y)
 
@@ -80,7 +80,7 @@ def augment_pitching_data_hard(X, y):
     augmented_y.append(y)
 
     # 3. 무작위 스케일링
-    scales = np.random.uniform(0.75, 1.25, (len(X), 1, 1, 1)).astype('float32')
+    scales = np.random.uniform(0.85, 1.15, (len(X), 1, 1, 1)).astype('float32')
     scaled_X = (X * scales)
     augmented_X.append(scaled_X)
     augmented_y.append(y)
@@ -147,29 +147,33 @@ def load_pitching_dataset(root_path):
 # 4. 고성능 모델 빌드 (Inception + Residual)
 # ==============================
 def build_model(num_classes):
+    # 입력: (60, 13, 6) -> (Time, Space, Channels)
     inputs = layers.Input(shape=(MAX_FRAMES, NUM_JOINTS, CHANNELS))
-    x = layers.Reshape((MAX_FRAMES, NUM_JOINTS * CHANNELS))(inputs)
     
-    # Conv Block 1
-    x = layers.Conv1D(128, kernel_size=3, padding='same', activation='relu')(x)
+    # kernel_size=(3, 3)으로 시간(3프레임)과 공간(3개 관절)을 동시에 스캔
+    x = layers.Conv2D(128, kernel_size=(5, 5), padding='same', activation='relu')(inputs)
     x = layers.BatchNormalization()(x)
-    x = layers.SpatialDropout1D(0.2)(x) # 프레임 단위 규제
-    x = layers.MaxPooling1D(2)(x)
+    x = layers.SpatialDropout2D(0.1)(x) 
+    x = layers.MaxPooling2D(pool_size=(2, 1))(x) # 시간축만 줄여서 해상도 유지
     
-    # Conv Block 2
-    x = layers.Conv1D(64, kernel_size=3, padding='same', activation='relu')(x)
+    # Conv Block 2 (기존 Conv1D 128과 대응)
+    x = layers.Conv2D(128, kernel_size=(5, 5), padding='same', activation='relu')(x)
     x = layers.BatchNormalization()(x)  
+    x = layers.Dropout(0.1)(x) 
     
-    x = layers.GlobalAveragePooling1D()(x)
+    x = layers.Conv2D(128, kernel_size=(5, 5), padding='same', activation='relu')(x)
+    x = layers.BatchNormalization()(x)  
+    x = layers.Dropout(0.1)(x) 
+    # GAP2D: (H, W, C) -> (C,)로 압축
+    x = layers.GlobalAveragePooling2D()(x)
     
-    # Dense Block
-    x = layers.Dense(64, activation='relu', kernel_regularizer=regularizers.l2(0.02))(x)
-    x = layers.GaussianDropout(0.3)(x) # 수치 데이터에 최적화된 노이즈 드롭아웃
+    # Dense Block (기존 128 Dense와 대응)
+    x = layers.Dense(64, activation='relu', kernel_regularizer=regularizers.l2(0.03))(x)
+    x = layers.GaussianDropout(0.3)(x)
     
     outputs = layers.Dense(num_classes, activation='softmax')(x)
     
     return models.Model(inputs, outputs)
-
 # ==============================
 # 5. 실행부 (GPU 가속 강제)
 # ==============================
@@ -206,7 +210,7 @@ with tf.device('/GPU:0'):
         
         model.compile(
             optimizer=optimizers.Adam(learning_rate=lr_schedule), 
-            loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.2), 
+            loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.1), 
             metrics=['accuracy']
         )
         
@@ -214,7 +218,7 @@ with tf.device('/GPU:0'):
         checkpoint = callbacks.ModelCheckpoint(model_path, monitor='val_accuracy', save_best_only=True, mode='max', verbose=0)
         log_path = os.path.join(LOG_DIR, f"learning_log_fold_{fold_no}.csv")
         csv_logger = callbacks.CSVLogger(log_path, append=False)
-        early_stop = callbacks.EarlyStopping(monitor='val_loss', patience=1000, restore_best_weights=True)
+        early_stop = callbacks.EarlyStopping(monitor='val_loss', patience=3000, restore_best_weights=True)
 
         history = model.fit(
             X_train_aug, y_train_aug, 
@@ -225,7 +229,7 @@ with tf.device('/GPU:0'):
             verbose=1
         )
         
-        max_val_acc = max(history.history['val_accuracy'])
+        max_val_acc = max(history.history['val_accuracy'])  
         accuracies.append(max_val_acc)
         print(f"✅ Fold {fold_no} 완료! 최고 검증 정확도: {max_val_acc:.4f}")
         fold_no += 1

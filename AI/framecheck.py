@@ -1,3 +1,6 @@
+#####
+## 프레임부족 확인용 코드
+#####
 import os
 import glob
 import pandas as pd

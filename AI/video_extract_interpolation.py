@@ -1,3 +1,6 @@
+####
+## 자동 클립 생성용 코드
+####
 import cv2
 import mediapipe as mp
 import numpy as np
