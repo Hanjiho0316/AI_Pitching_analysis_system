@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, current_app, flash
-from flask_login import login_required, current_user
+from flask_login import login_required
 from app.services.ml_service import get_task_status
-from werkzeug.utils import secure_filename
+from app.models.pitcher import Pitcher 
 import os
 
 main_bp = Blueprint('main', __name__)
@@ -30,11 +30,20 @@ def result():
         
     analysis_result = task_info['result']
     filename = os.path.basename(task_info['filepath'])
-
-    if analysis_result['similarity'] < 40.0:
+    match_player_raw = analysis_result['player_img']
+    pitcher_info = Pitcher.query.filter_by(model_label=match_player_raw).first()
+    
+    if not pitcher_info:
+        pitcher_info = {
+            'name_ko': analysis_result['match_player'],
+            'description': '분석된 투수의 상세 정보가 곧 업데이트될 예정입니다.',
+            'name_en': 'default'
+        }
+    
+    if analysis_result['similarity'] < 0.0:
         return render_template('failure.html')
     
-    return render_template('result.html', result=analysis_result, filename=filename)
+    return render_template('result.html', result=analysis_result, pitcher=pitcher_info, filename=filename)
 
 @main_bp.route('/ranking')
 def ranking():

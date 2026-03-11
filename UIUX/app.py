@@ -10,4 +10,4 @@ with app.app_context():
 
 if __name__ == '__main__':
     # 개발 중에는 debug=True로 설정하여 코드 수정 시 서버가 자동 재시작되게 합니다.
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
