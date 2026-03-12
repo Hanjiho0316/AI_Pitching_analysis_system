@@ -1,3 +1,9 @@
+"""
+비전 기반 투구 분석 서비스 모듈입니다.
+YOLOv8, MediaPipe, TensorFlow 모델을 결합하여 사용자의 투구 폼을 분석하고 
+데이터베이스에 저장된 프로 투수 데이터와 비교합니다.
+"""
+
 import os
 import cv2
 import mediapipe as mp
@@ -11,43 +17,87 @@ import threading
 import uuid
 from flask import current_app
 
-task_store = {}
-
-# 모델 규격 설정
+# 모델 및 데이터 처리를 위한 설정값
 MAX_FRAMES, NUM_JOINTS, CHANNELS = 60, 13, 6
 JOINT_MAP = {
-    0: "NOSE", 11: "L_SHOULDER", 12: "R_SHOULDER", 13: "L_ELBOW", 14: "R_ELBOW",
-    15: "L_WRIST", 16: "R_WRIST", 23: "L_HIP", 24: "R_HIP", 25: "L_KNEE",
-    26: "R_KNEE", 27: "L_ANKLE", 28: "R_ANKLE"
+    0: "NOSE", 
+    11: "L_SHOULDER", 
+    12: "R_SHOULDER", 
+    13: "L_ELBOW", 
+    14: "R_ELBOW",
+    15: "L_WRIST", 
+    16: "R_WRIST", 
+    23: "L_HIP", 
+    24: "R_HIP", 
+    25: "L_KNEE",
+    26: "R_KNEE", 
+    27: "L_ANKLE", 
+    28: "R_ANKLE"
 }
 
+# 비동기 작업의 상태와 결과를 임시 저장하는 딕셔너리
+task_store = {}
+
+
 def get_detailed_analysis(df):
-    """관절 위치 기반 물리적 수치 추출"""
+    """
+    추출된 관절의 좌표 데이터를 바탕으로 
+    투구 시 발생하는 물리적 수치 (기울기, 릴리스 포인트 높이, 보폭)를 계산합니다.
+
+    Args:
+        df (DataFrame): 프레임별 관절의 x, y, z 좌표 및 
+            가시성(visibility) 데이터가 포함된 데이터프레임
+
+    Returns:
+        dict: 어깨 기울기(tilt), 릴리스 포인트 높이(height), 
+            보폭(stride) 수치를 포함하는 딕셔너리. 
+            데이터가 비어있을 경우 0으로 초기화된 값을 반환합니다.
+    """
     if df.empty:
         return {"tilt": 0, "height": 0, "stride": 0}
+    
+    # 양쪽 어깨의 y좌표 차이로 상체 기울기 계산
     tilt = (df['R_SHOULDER_y'] - df['L_SHOULDER_y']).max()
+    # 손목의 최소 y좌표로 공을 놓는 지점의 높이 추정
     release_height = min(df['R_WRIST_y'].min(), df['L_WRIST_y'].min())
+    # 양 발목 사이의 최대 x축 거리를 통해 보폭 계산
     stride = np.abs(df['R_ANKLE_x'] - df['L_ANKLE_x']).max()
+
     return {"tilt": tilt, "height": release_height, "stride": stride}
 
+
 def predict_and_analyze(raw_data, classifier_model, le):
-    """프레임 부족 시 패딩 처리를 포함한 예측 로직"""
+    """
+    수집된 프레임별 관절 데이터를 전처리하고 
+    딥러닝 모델을 통해 가장 유사한 투수를 예측합니다.
+    엉덩이 중심을 기준으로 좌표를 정규화하며, 
+    입력 길이가 부족할 경우 마지막 프레임을 복사하여 패딩을 수행합니다.
+
+    Args:
+        raw_data (list)             : 투구 동작 구간 동안 수집된 프레임별 관절 데이터 리스트
+        classifier_model (Model)    : 학습된 텐서플로우 투수 분류 모델
+        le (LabelEncoder)           : 예측된 클래스 인덱스를 실제 투수 이름으로 변환할 라벨 인코더
+
+    Returns:
+        tuple: (예측된 투수 이름(str), 예측 신뢰도/유사도 백분율(float), 상세 분석 수치(dict))
+    """
     if not raw_data or len(raw_data) == 0:
         return "Unknown", 0.0, {"tilt": 0, "height": 0, "stride": 0}
 
+    # 좌표 데이터 파싱 및 힙 기반 정규화
     data = np.array(raw_data)[:, 1:].reshape(-1, NUM_JOINTS, 4)
     coords, vis = data[:, :, :3], data[:, :, 3]
-
     hip_center = (coords[:, 7, :] + coords[:, 8, :]) / 2
     norm_coords = coords.copy()
     for f in range(coords.shape[0]):
         norm_coords[f] -= hip_center[f]
     
+    # 프레임 간 속도 정보(deltas) 추출
     deltas = np.diff(norm_coords, axis=0, prepend=norm_coords[0:1, :, :])
     deltas *= np.expand_dims(vis, axis=-1)
-
     combined = np.concatenate([norm_coords, deltas], axis=-1).astype('float32')
 
+    # 고정 길이(MAX_FRAMES) 입력을 위한 패딩 처리
     current_len = len(combined)
     if current_len >= MAX_FRAMES:
         combined = combined[:MAX_FRAMES]
@@ -57,12 +107,13 @@ def predict_and_analyze(raw_data, classifier_model, le):
         padding = np.tile(last_frame, (padding_size, 1, 1))
         combined = np.vstack([combined, padding])
     
+    # 모델 추론 및 레이블 디코딩
     input_tensor = np.expand_dims(combined, axis=0)
     preds = classifier_model.predict(input_tensor, verbose=0)
-    
     name = le.inverse_transform([np.argmax(preds[0])])[0]
     conf = float(np.max(preds[0]) * 100)
 
+    # 상세 수치 분석 호출
     cols = []
     for j_id in JOINT_MAP.values():
         cols.extend([f"{j_id}_x", f"{j_id}_y", f"{j_id}_z", f"{j_id}_vis"])
@@ -72,6 +123,21 @@ def predict_and_analyze(raw_data, classifier_model, le):
     return name, conf, analysis
 
 def process_video_background(task_id, filepath, base_dir):
+    """
+    백그라운드 스레드에서 실행되며, 업로드된 영상에서 
+    객체 추적(YOLO) 및 자세 추정(MediaPipe)을 수행합니다.
+    무릎과 엉덩이의 상대적 위치를 통해 투구의 시작(와인드업 등)을 감지하고, 
+    데이터를 수집한 뒤 모델을 호출하여 결과를 전역 딕셔너리에 저장합니다.
+
+    Args:
+        task_id (str)   : 현재 분석 작업의 고유 식별자 (UUID)
+        filepath (str)  : 분석할 영상 파일의 절대 경로
+        base_dir (str)  : 어플리케이션의 기본 루트 디렉토리 (모델 파일 경로 탐색 시 사용)
+
+    Returns:
+        None: 결과를 직접 반환하지 않고 task_store 딕셔너리를 업데이트합니다.
+    """
+    
     try:
         task_store[task_id]['status'] = 'processing'
         
@@ -97,6 +163,7 @@ def process_video_background(task_id, filepath, base_dir):
         is_recording = False
         post_frame_count = 0
         
+        # 사람 탐지 시 검색할 화면의 관심 영역(ROI)을 중앙부로 한정합니다.
         ROI_X1, ROI_X2 = int(width * 0.3), int(width * 0.7)
         ROI_Y1, ROI_Y2 = int(height * 0.2), int(height * 0.9)
 
@@ -129,6 +196,7 @@ def process_video_background(task_id, filepath, base_dir):
                         lm = res.pose_landmarks.landmark
                         knee_y, hip_y = min(lm[25].y, lm[26].y), (lm[23].y + lm[24].y) / 2
                         
+                        # 무릎이 엉덩이 높이 근처로 올라오면(레그 킥) 투구 동작 시작으로 간주합니다.
                         if knee_y < (hip_y + 0.15) and not is_recording:
                             is_recording, raw_data_accumulator, post_frame_count = True, [], 0
 
@@ -142,7 +210,7 @@ def process_video_background(task_id, filepath, base_dir):
                 post_frame_count += 1
                 if post_frame_count >= post_offset_frames:
                     prediction_name, prediction_conf, analysis_data = predict_and_analyze(raw_data_accumulator, classifier_model, le)
-                    break # 분석이 끝나면 불필요한 영상 읽기를 중단합니다.
+                    break
 
         cap.release()
         
@@ -150,15 +218,14 @@ def process_video_background(task_id, filepath, base_dir):
         if is_recording and len(raw_data_accumulator) > 0 and prediction_name == "Unknown":
             prediction_name, prediction_conf, analysis_data = predict_and_analyze(raw_data_accumulator, classifier_model, le)
 
-        # 결과 텍스트 파싱 (예: 2022sohyeongjun.mp4 -> 소형준)
-        # 사용자님의 데이터셋 형태에 맞춰 정규식이나 문자열 슬라이싱을 조절할 수 있습니다.
+        # 모델 결과물에서 확장자 및 숫자를 제거하여 투수의 순수 이름을 추출합니다.
         clean_name = prediction_name.replace('.mp4', '')
         clean_name = ''.join([i for i in clean_name if not i.isdigit()])
         
         task_store[task_id]['result'] = {
             'similarity': round(prediction_conf, 1),
             'match_player': clean_name,
-            'player_img': prediction_name, # 매칭된 선수의 원본 파일명 보존
+            'player_img': prediction_name,
             'details': analysis_data
         }
         task_store[task_id]['status'] = 'completed'
@@ -169,6 +236,16 @@ def process_video_background(task_id, filepath, base_dir):
         print(f"Error during analysis: {e}")
 
 def start_analysis_task(filepath, base_dir):
+    """
+    고유한 작업 ID를 발급하고 영상 분석을 백그라운드 스레드로 시작합니다.
+
+    Args:
+        filepath (str): 분석할 대상 영상의 시스템 경로
+        base_dir (str): 어플리케이션의 기본 루트 경로
+
+    Returns:
+        str: 생성된 비동기 작업의 고유 식별자 (task_id)
+    """
     task_id = str(uuid.uuid4())
     task_store[task_id] = {
         'status': 'pending',
@@ -183,4 +260,13 @@ def start_analysis_task(filepath, base_dir):
     return task_id
 
 def get_task_status(task_id):
+    """
+    발급된 작업 ID를 통해 현재 분석 진행 상태와 완료 시 결과를 조회합니다.
+
+    Args:
+        task_id (str): 상태를 조회할 작업의 고유 식별자
+
+    Returns:
+        dict: 작업의 현재 상태('pending', 'processing', 'completed', 'error' 등) 및 결과 데이터를 담은 딕셔너리
+    """
     return task_store.get(task_id, {'status': 'not_found'})

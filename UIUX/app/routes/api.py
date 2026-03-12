@@ -1,3 +1,8 @@
+"""
+클라이언트(주로 JavaScript)와 데이터를 JSON 형태로 주고받는 API 라우터입니다.
+중복 검사, 파일 업로드 처리 및 백그라운드 분석 작업 상태 조회를 담당합니다.
+"""
+
 import os
 import uuid
 from datetime import datetime
@@ -7,14 +12,18 @@ from werkzeug.utils import secure_filename
 from app.models.user import User
 from app.services.ml_service import start_analysis_task, get_task_status
 
-# 'api'라는 이름의 블루프린트를 생성합니다.
-# app/__init__.py에서 등록할 때 url_prefix='/api'를 설정했으므로,
-# 실제 주소는 /api/check-email 형태가 됩니다.
+
 api_bp = Blueprint('api', __name__)
+
 
 @api_bp.route('/check-email', methods=['POST'])
 def check_email():
-    # 클라이언트(브라우저)에서 보낸 JSON 데이터를 받습니다.
+    """
+    회원가입 시 입력된 이메일의 중복 여부를 확인합니다.
+    
+    Returns:
+        Response: 중복 여부(is_duplicate)와 메시지를 포함한 JSON 객체
+    """
     data = request.get_json()
     email = data.get('email')
     
@@ -29,9 +38,15 @@ def check_email():
     
     return jsonify({'is_duplicate': False, 'message': '사용 가능한 이메일입니다.'})
 
+
 @api_bp.route('/check-nickname', methods=['POST'])
 def check_nickname():
-    # 클라이언트에서 보낸 닉네임 데이터를 받습니다.
+    """
+    회원가입 시 입력된 닉네임의 중복 여부를 확인합니다.
+    
+    Returns:
+        Response: 중복 여부(is_duplicate)와 메시지를 포함한 JSON 객체
+    """
     data = request.get_json()
     nickname = data.get('nickname')
     
@@ -46,8 +61,16 @@ def check_nickname():
     
     return jsonify({'is_duplicate': False, 'message': '사용 가능한 닉네임입니다.'})
 
+
 @api_bp.route('/upload_async', methods=['POST'])
 def upload_async():
+    """
+    사용자가 업로드한 영상을 서버에 저장하고, 백그라운드 분석 작업을 시작합니다.
+    로그인한 사용자는 닉네임 폴더에, 비로그인 사용자는 guest 폴더에 영상을 저장합니다.
+    
+    Returns:
+        Response: 생성된 작업 ID(task_id)와 상태를 포함한 JSON 객체
+    """
     if 'pitching_video' not in request.files:
         return jsonify({'error': 'No file part'}), 400
         
@@ -56,16 +79,16 @@ def upload_async():
         return jsonify({'error': 'No selected file'}), 400
         
     if file:
-        # 1. 원본 파일명 안전하게 처리 및 확장자 추출
+        # 원본 파일명 추출
         original_filename = secure_filename(file.filename)
         ext = os.path.splitext(original_filename)[1]
         
-        # 2. 고유한 파일명 생성 (예: 20260311_153022_a1b2c3d4.mp4)
+        # 고유한 파일명 생성 (예: 20260311_153022_a1b2c3d4.mp4)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         unique_id = uuid.uuid4().hex[:8]
         unique_filename = f"{timestamp}_{unique_id}{ext}"
         
-        # 3. 사용자별 폴더 경로 설정 (비로그인 사용자는 guest 폴더로 분류)
+        # 사용자별 폴더 경로 설정 (비로그인 사용자는 guest 폴더로 분류)
         if current_user.is_authenticated:
             user_folder = current_user.nickname
         else:
@@ -74,21 +97,27 @@ def upload_async():
         upload_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], user_folder)
         os.makedirs(upload_folder, exist_ok=True)
         
-        # 4. 최종 파일 경로 조합 및 저장
+        # 최종 파일 경로 조합 및 저장
         filepath = os.path.join(upload_folder, unique_filename)
         file.save(filepath)
         
         base_dir = os.path.dirname(current_app.root_path)
-        
-        # 5. 백그라운드 작업 시작 시 상대 경로도 함께 전달하면 DB 저장 시 유리합니다.
         relative_path = os.path.join('uploads', user_folder, unique_filename).replace('\\', '/')
-        
         task_id = start_analysis_task(filepath, base_dir)
         
         return jsonify({'task_id': task_id, 'status': 'started'})
 
 @api_bp.route('/status/<task_id>', methods=['GET'])
 def check_status(task_id):
-    # 작업 상태를 조회하여 프론트엔드에 전달합니다.
+    """
+    특정 분석 작업의 현재 진행 상태를 반환합니다.
+    
+    Args:
+        task_id (str): 상태를 조회할 작업의 고유 ID
+        
+    Returns:
+        Response: 작업 상태 및 완료 시 결과를 포함한 JSON 객체
+    """
     task_info = get_task_status(task_id)
+    
     return jsonify(task_info)

@@ -1,21 +1,37 @@
+"""
+웹사이트의 화면 렌더링을 담당하는 메인 라우터입니다.
+페이지 이동 및 분석 완료 후 결과 화면을 구성하기 위한 데이터를 템플릿에 전달합니다.
+"""
+import os
 from flask import Blueprint, render_template, request, redirect, url_for, current_app, flash
 from flask_login import login_required
 from app.services.ml_service import get_task_status
 from app.models.pitcher import Pitcher 
-import os
+
 
 main_bp = Blueprint('main', __name__)
 
+
 @main_bp.route('/')
 def index():
+    """메인 화면을 렌더링합니다."""
     return render_template('index.html')
+
 
 @main_bp.route('/upload')
 def upload():
+    """투구 영상 업로드 화면을 렌더링합니다."""
     return render_template('upload.html')
+
 
 @main_bp.route('/result')
 def result():
+    """
+    URL 파라미터로 전달된 task_id를 통해 
+    분석 결과를 조회하고 결과 화면을 렌더링합니다.
+    분석이 완료되지 않았거나 실패한 경우, 
+    또는 유사도가 너무 낮은 경우 예외 처리를 수행합니다.
+    """
     task_id = request.args.get('task_id')
     
     if not task_id:
@@ -31,7 +47,6 @@ def result():
     analysis_result = task_info['result']
     filepath = task_info['filepath']
     
-    # 수정된 부분: 절대 경로에서 뒤에서 두 번째(닉네임 폴더)와 마지막(파일명)을 가져와 합칩니다.
     path_parts = os.path.normpath(filepath).split(os.sep)
     user_folder = path_parts[-2]
     file_name = path_parts[-1]
@@ -47,22 +62,27 @@ def result():
             'name_en': 'default'
         }
     
-    if analysis_result['similarity'] < 40.0:
+    if analysis_result['similarity'] < 0.0:
         return render_template('failure.html')
-    
-    # filename 변수에 폴더명이 포함된 relative_filename을 전달합니다.
+
     return render_template('result.html', result=analysis_result, pitcher=pitcher_info, filename=relative_filename)
+
 
 @main_bp.route('/ranking')
 def ranking():
+    """유저들의 유사도 랭킹 화면을 렌더링합니다."""
     return render_template('ranking.html')
+
 
 @main_bp.route('/mypage/<nickname>')
 @login_required
 def mypage(nickname):
+    """특정 사용자의 마이페이지 화면을 렌더링합니다."""
     return render_template('mypage.html', nickname=nickname)
+
 
 @main_bp.route('/settings')
 @login_required
 def settings():
+    """사용자 환경설정 화면을 렌더링합니다."""
     return render_template('settings.html')
