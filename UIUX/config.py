@@ -4,10 +4,10 @@ import os
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
-    # 세션 및 쿠키 보안을 위한 비밀키입니다. (실제 서비스 시에는 복잡한 무작위 문자열 사용 권장)
+    # 세션 관리용 키
     SECRET_KEY = 'pitchtypes-secret-key-debugging'
     
-    # 데이터베이스 파일의 저장 위치를 설정합니다.
+    # 데이터베이스 설정
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'pitching.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
@@ -17,5 +17,10 @@ class Config:
     
     # 업로드 가능한 최대 파일 용량 제한 (32MB)
     MAX_CONTENT_LENGTH = 32 * 1024 * 1024
+
+    # 머신러닝 모델 파일 경로 설정
+    ML_MODEL_PATH = os.path.join(BASE_DIR, 'ml_models', 'best_model_fold_4.h5')
+    LABEL_ENCODER_PATH = os.path.join(BASE_DIR, 'ml_models', 'label_encoder.pkl')
+    YOLO_MODEL_PATH = 'yolov8n.pt'
 
     

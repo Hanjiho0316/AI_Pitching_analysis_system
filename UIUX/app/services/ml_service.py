@@ -3,7 +3,6 @@
 YOLOv8, MediaPipe, TensorFlow 모델을 결합하여 사용자의 투구 폼을 분석하고 
 데이터베이스에 저장된 프로 투수 데이터와 비교합니다.
 """
-
 import os
 import cv2
 import mediapipe as mp
@@ -16,6 +15,7 @@ from ultralytics import YOLO
 import threading
 import uuid
 from flask import current_app
+
 
 # 모델 및 데이터 처리를 위한 설정값
 MAX_FRAMES, NUM_JOINTS, CHANNELS = 60, 13, 6
@@ -122,7 +122,8 @@ def predict_and_analyze(raw_data, classifier_model, le):
 
     return name, conf, analysis
 
-def process_video_background(task_id, filepath, base_dir):
+
+def process_video_background(task_id, filepath, ml_model_path, encoder_path, yolo_path):
     """
     백그라운드 스레드에서 실행되며, 업로드된 영상에서 
     객체 추적(YOLO) 및 자세 추정(MediaPipe)을 수행합니다.
@@ -141,14 +142,9 @@ def process_video_background(task_id, filepath, base_dir):
     try:
         task_store[task_id]['status'] = 'processing'
         
-        # 모델 경로 설정
-        ml_dir = os.path.join(base_dir, 'ml_models')
-        model_path = os.path.join(ml_dir, 'best_model_fold_4.h5')
-        encoder_path = os.path.join(ml_dir, 'label_encoder.pkl')
-        
-        # 스레드 내부에서 모델 로드 (충돌 방지)
-        yolo_model = YOLO("yolov8n.pt")
-        classifier_model = tf.keras.models.load_model(model_path)
+        # 스레드 내부에서 전달받은 경로를 사용하여 모델 로드 (충돌 방지)
+        yolo_model = YOLO(yolo_path)
+        classifier_model = tf.keras.models.load_model(ml_model_path)
         le = joblib.load(encoder_path)
         
         mp_pose = mp.solutions.pose
@@ -235,7 +231,8 @@ def process_video_background(task_id, filepath, base_dir):
         task_store[task_id]['error_message'] = str(e)
         print(f"Error during analysis: {e}")
 
-def start_analysis_task(filepath, base_dir):
+
+def start_analysis_task(filepath, ml_model_path, encoder_path, yolo_path):
     """
     고유한 작업 ID를 발급하고 영상 분석을 백그라운드 스레드로 시작합니다.
 
@@ -253,11 +250,16 @@ def start_analysis_task(filepath, base_dir):
         'result': None
     }
     
-    thread = threading.Thread(target=process_video_background, args=(task_id, filepath, base_dir))
+    # 스레드 생성 시 경로들을 args로 전달합니다.
+    thread = threading.Thread(
+        target=process_video_background, 
+        args=(task_id, filepath, ml_model_path, encoder_path, yolo_path)
+    )
     thread.daemon = True
     thread.start()
     
     return task_id
+
 
 def get_task_status(task_id):
     """

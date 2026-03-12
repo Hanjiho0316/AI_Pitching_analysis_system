@@ -2,7 +2,6 @@
 클라이언트(주로 JavaScript)와 데이터를 JSON 형태로 주고받는 API 라우터입니다.
 중복 검사, 파일 업로드 처리 및 백그라운드 분석 작업 상태 조회를 담당합니다.
 """
-
 import os
 import uuid
 from datetime import datetime
@@ -11,7 +10,6 @@ from flask_login import current_user
 from werkzeug.utils import secure_filename
 from app.models.user import User
 from app.services.ml_service import start_analysis_task, get_task_status
-
 
 api_bp = Blueprint('api', __name__)
 
@@ -101,11 +99,15 @@ def upload_async():
         filepath = os.path.join(upload_folder, unique_filename)
         file.save(filepath)
         
-        base_dir = os.path.dirname(current_app.root_path)
-        relative_path = os.path.join('uploads', user_folder, unique_filename).replace('\\', '/')
-        task_id = start_analysis_task(filepath, base_dir)
+        # current_app.config에서 모델 경로들을 가져옵니다.
+        ml_model_path = current_app.config.get('ML_MODEL_PATH')
+        encoder_path = current_app.config.get('LABEL_ENCODER_PATH')
+        yolo_path = current_app.config.get('YOLO_MODEL_PATH')
+        
+        task_id = start_analysis_task(filepath, ml_model_path, encoder_path, yolo_path)
         
         return jsonify({'task_id': task_id, 'status': 'started'})
+
 
 @api_bp.route('/status/<task_id>', methods=['GET'])
 def check_status(task_id):

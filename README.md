@@ -2,6 +2,25 @@
 - 모델 파트: 한지호, 김재위
 - UI/UX 파트: 최민석, 문형철
 
+# 실행 방법
+1. 레포지토리 클로닝
+```
+git clone https://github.com/Hanjiho0316/AI_Pitching_analysis_system.git
+```
+2. 패키지 설치
+```
+pip install -r requirements.txt
+```
+3. 모델 배치: 학습이 완료된 모델 파일을 `AI_Pitching_analysis_system/UIUX/ml_models/`에 적재한다. (best_model_fold.h5, label_encoder.pkl)
+4. 시드 데이터 로드 
+```
+python UIUX/seed.py
+```
+5. 웹 서버 실행
+```
+python UIUX/app.py
+```
+
 # 프로젝트 디렉토리 구성
 ```
 pitching_project/UI/UX
@@ -51,4 +70,34 @@ pitching_project/UI/UX
 ```
 
 # 데이터베이스 구성
-ㅇㅇ...
+```mermaid
+erDiagram
+    USER ||--o{ ANALYSIS : "1:N 관계"
+    PITCHER ||--o{ ANALYSIS : "1:N 관계"
+
+    USER {
+        Integer id PK
+        String email UK
+        String nickname UK
+        String password_hash
+        String profile_image
+        Float best_score
+        DateTime created_at
+    }
+    PITCHER {
+        Integer id PK
+        String model_label UK
+        String name_en
+        String name_ko
+        Text description
+        DateTime created_at
+    }
+    ANALYSIS {
+        Integer id PK
+        Integer user_id FK
+        Integer pitcher_id FK
+        Float similarity
+        String user_video_path
+        DateTime created_at
+    }
+```
