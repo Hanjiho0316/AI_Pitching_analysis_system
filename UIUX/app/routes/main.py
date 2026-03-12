@@ -7,6 +7,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, curren
 from flask_login import login_required
 from app.services.ml_service import get_task_status
 from app.models.pitcher import Pitcher 
+from app.models.ranking import Ranking
 
 
 main_bp = Blueprint('main', __name__)
@@ -64,14 +65,19 @@ def result():
     
     if analysis_result['similarity'] < 0.0:
         return render_template('failure.html')
-
-    return render_template('result.html', result=analysis_result, pitcher=pitcher_info, filename=relative_filename)
+    
+    # 데이터베이스에서 점수 내림차순으로 상위 3명의 랭킹 데이터를 가져옵니다.
+    top_rankings = Ranking.query.order_by(Ranking.score.desc()).limit(3).all()
+    
+    # 렌더링 시 top_rankings 데이터를 함께 전달합니다.
+    return render_template('result.html', result=analysis_result, pitcher=pitcher_info, filename=relative_filename, top_rankings=top_rankings)
 
 
 @main_bp.route('/ranking')
 def ranking():
-    """유저들의 유사도 랭킹 화면을 렌더링합니다."""
-    return render_template('ranking.html')
+    """상위 10명의 랭킹 데이터를 점수 내림차순으로 가져옵니다."""
+    top_rankings = Ranking.query.order_by(Ranking.score.desc()).limit(10).all()
+    return render_template('ranking.html', rankings=top_rankings)
 
 
 @main_bp.route('/mypage/<nickname>')

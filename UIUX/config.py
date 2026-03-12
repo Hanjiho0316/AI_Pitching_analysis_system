@@ -19,7 +19,7 @@ class Config:
     MAX_CONTENT_LENGTH = 32 * 1024 * 1024
 
     # 머신러닝 모델 파일 경로 설정
-    ML_MODEL_PATH = os.path.join(BASE_DIR, 'ml_models', 'best_model_fold_4.h5')
+    ML_MODEL_PATH = os.path.join(BASE_DIR, 'ml_models', 'best_model_fold.h5')
     LABEL_ENCODER_PATH = os.path.join(BASE_DIR, 'ml_models', 'label_encoder.pkl')
     YOLO_MODEL_PATH = 'yolov8n.pt'
 

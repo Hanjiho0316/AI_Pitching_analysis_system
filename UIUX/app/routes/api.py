@@ -9,6 +9,7 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_login import current_user
 from werkzeug.utils import secure_filename
 from app.models.user import User
+from app.models.ranking import Ranking
 from app.services.ml_service import start_analysis_task, get_task_status
 
 api_bp = Blueprint('api', __name__)
@@ -104,7 +105,20 @@ def upload_async():
         encoder_path = current_app.config.get('LABEL_ENCODER_PATH')
         yolo_path = current_app.config.get('YOLO_MODEL_PATH')
         
-        task_id = start_analysis_task(filepath, ml_model_path, encoder_path, yolo_path)
+        # 비동기 스레드에서 DB에 접근하기 위해 현재 앱 인스턴스를 가져옵니다.
+        app_instance = current_app._get_current_object()
+        
+        # 비로그인 사용자(guest)의 경우 DB 저장을 생략하거나 별도 처리하기 위해 분기합니다.
+        user_id = current_user.id if current_user.is_authenticated else None
+        
+        task_id = start_analysis_task(
+            filepath, 
+            ml_model_path, 
+            encoder_path, 
+            yolo_path, 
+            app_instance, 
+            user_id
+        )
         
         return jsonify({'task_id': task_id, 'status': 'started'})
 
@@ -123,3 +137,26 @@ def check_status(task_id):
     task_info = get_task_status(task_id)
     
     return jsonify(task_info)
+
+
+@api_bp.route('/more-rankings', methods=['GET'])
+def more_rankings():
+    offset = request.args.get('offset', 10, type=int)
+    limit = request.args.get('limit', 10, type=int)
+    
+    rankings = Ranking.query.order_by(Ranking.score.desc()).offset(offset).limit(limit).all()
+    
+    result = []
+    for rank in rankings:
+        # 복잡한 replace 대신 깔끔하게 저장된 name_en 속성을 활용합니다.
+        safe_image_name = rank.pitcher.name_en + '.jpg'
+        
+        result.append({
+            'nickname': rank.user.nickname,
+            'profile_image': rank.user.profile_image,
+            'pitcher_name': rank.pitcher.name_ko,
+            'pitcher_image': safe_image_name,
+            'score': rank.score
+        })
+        
+    return jsonify(result)

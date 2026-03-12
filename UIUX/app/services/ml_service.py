@@ -15,6 +15,11 @@ from ultralytics import YOLO
 import threading
 import uuid
 from flask import current_app
+from app import db
+from app.models.analysis import Analysis
+from app.models.ranking import Ranking
+from app.models.pitcher import Pitcher
+from app.models.user import User
 
 
 # 모델 및 데이터 처리를 위한 설정값
@@ -123,7 +128,7 @@ def predict_and_analyze(raw_data, classifier_model, le):
     return name, conf, analysis
 
 
-def process_video_background(task_id, filepath, ml_model_path, encoder_path, yolo_path):
+def process_video_background(task_id, filepath, ml_model_path, encoder_path, yolo_path, app, user_id):
     """
     백그라운드 스레드에서 실행되며, 업로드된 영상에서 
     객체 추적(YOLO) 및 자세 추정(MediaPipe)을 수행합니다.
@@ -224,6 +229,40 @@ def process_video_background(task_id, filepath, ml_model_path, encoder_path, yol
             'player_img': prediction_name,
             'details': analysis_data
         }
+
+        # 분석이 완료된 후 DB 저장을 위해 앱 컨텍스트를 엽니다.
+        if user_id is not None:
+            with app.app_context():
+                # 투수 ID 조회
+                pitcher_info = Pitcher.query.filter_by(model_label=prediction_name).first()
+                pitcher_id = pitcher_info.id if pitcher_info else 1
+                
+                # 1. Analysis 레코드 저장
+                new_analysis = Analysis(
+                    user_id=user_id,
+                    pitcher_id=pitcher_id,
+                    similarity=task_store[task_id]['result']['similarity'],
+                    user_video_path=filepath
+                )
+                db.session.add(new_analysis)
+                
+                # 2. Ranking 및 User 베스트 스코어 갱신 로직
+                user = User.query.get(user_id)
+                current_score = task_store[task_id]['result']['similarity']
+                
+                if current_score > user.best_score:
+                    user.best_score = current_score
+                    
+                    # 랭킹 테이블에도 최고 기록을 남깁니다.
+                    new_ranking = Ranking(
+                        user_id=user_id,
+                        pitcher_id=pitcher_id,
+                        score=current_score
+                    )
+                    db.session.add(new_ranking)
+                
+                db.session.commit()
+
         task_store[task_id]['status'] = 'completed'
         
     except Exception as e:
@@ -232,7 +271,7 @@ def process_video_background(task_id, filepath, ml_model_path, encoder_path, yol
         print(f"Error during analysis: {e}")
 
 
-def start_analysis_task(filepath, ml_model_path, encoder_path, yolo_path):
+def start_analysis_task(filepath, ml_model_path, encoder_path, yolo_path, app, user_id):
     """
     고유한 작업 ID를 발급하고 영상 분석을 백그라운드 스레드로 시작합니다.
 
@@ -253,7 +292,7 @@ def start_analysis_task(filepath, ml_model_path, encoder_path, yolo_path):
     # 스레드 생성 시 경로들을 args로 전달합니다.
     thread = threading.Thread(
         target=process_video_background, 
-        args=(task_id, filepath, ml_model_path, encoder_path, yolo_path)
+        args=(task_id, filepath, ml_model_path, encoder_path, yolo_path, app, user_id)
     )
     thread.daemon = True
     thread.start()
