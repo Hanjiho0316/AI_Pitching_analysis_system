@@ -81,16 +81,16 @@
     <div class="video-section">
         <div class="video-card">
             <h3 style="margin-top: 0;">나의 투구 모습</h3>
-            <video autoplay loop muted playsinline><source src="{{ url_for('static', filename='uploads/' + filename) }}" type="video/mp4"></video>
+            <video autoplay loop muted playsinline><source src="{{ url_for('static', filename='uploads/' + filename) }}" type="video/mp4"></video> 
         </div>
         <div class="video-card">
             <h3 style="margin-top: 0;">{{ pitcher.name_ko }} 선수 투구 모습</h3>
-            <video autoplay loop muted playsinline><source src="{{ url_for('static', filename='images/' + result.player_img) }}" type="video/mp4"></video>
+            <video autoplay loop muted playsinline><source src="{{ url_for('static', filename='videos/pitchers/' + pitcher.name_en + '.mp4') }}" type="video/mp4"></video>
         </div>
     </div>
 
     <div class="share-section">
-        <h2 style="margin-top: 0;">📲 분석 결과 카드 저장</h2>
+        <h2 style="margin-top: 0;">분석 결과 카드</h2>
         <div id="pitch-card">
             <div class="card-visual">
                 <img src="{{ url_for('static', filename='images/pitchers/' + pitcher.name_en + '.jpg') }}" class="card-player-img" alt="선수 이미지">
@@ -105,13 +105,13 @@
             </div>
         </div>
         <div class="btn-group">
-            <button onclick="saveCard()" class="btn btn-save">📲 고화질 카드 저장</button>
-            <a href="/" class="btn btn-home">🏠 처음으로</a>
+            <button onclick="saveCard()" class="btn btn-save">카드 저장하기</button>
+            <a href="/" class="btn btn-home"></a>
         </div>
     </div>
 
     <div class="ranking-card">
-        <h3 style="margin-top: 0;">🏆 실시간 유사도 랭킹</h3>
+        <h3 style="margin-top: 0;">실시간 유사도 랭킹</h3>
         <table>
             <tr><th>순위</th><th>사용자</th><th>선수</th><th>유사도</th></tr>
             <tr style="color:var(--gold)"><td>1</td><td>형철(나)</td><td>{{ pitcher.name_ko }}</td><td>{{ result.similarity }}%</td></tr>

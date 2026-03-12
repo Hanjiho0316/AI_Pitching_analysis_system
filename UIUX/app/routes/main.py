@@ -29,7 +29,14 @@ def result():
         return redirect(url_for('main.index'))
         
     analysis_result = task_info['result']
-    filename = os.path.basename(task_info['filepath'])
+    filepath = task_info['filepath']
+    
+    # 수정된 부분: 절대 경로에서 뒤에서 두 번째(닉네임 폴더)와 마지막(파일명)을 가져와 합칩니다.
+    path_parts = os.path.normpath(filepath).split(os.sep)
+    user_folder = path_parts[-2]
+    file_name = path_parts[-1]
+    relative_filename = f"{user_folder}/{file_name}"
+    
     match_player_raw = analysis_result['player_img']
     pitcher_info = Pitcher.query.filter_by(model_label=match_player_raw).first()
     
@@ -40,10 +47,11 @@ def result():
             'name_en': 'default'
         }
     
-    if analysis_result['similarity'] < 0.0:
+    if analysis_result['similarity'] < 40.0:
         return render_template('failure.html')
     
-    return render_template('result.html', result=analysis_result, pitcher=pitcher_info, filename=filename)
+    # filename 변수에 폴더명이 포함된 relative_filename을 전달합니다.
+    return render_template('result.html', result=analysis_result, pitcher=pitcher_info, filename=relative_filename)
 
 @main_bp.route('/ranking')
 def ranking():
