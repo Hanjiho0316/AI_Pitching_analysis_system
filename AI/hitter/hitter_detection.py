@@ -10,10 +10,10 @@ from collections import deque
 # ==============================
 # ⚙️ 사용자 설정 및 모델 로드
 # ==============================
-MODEL_PATH = r"saved_models_yolo_3d/yolo_3d_fold_1.h5" 
-ENCODER_PATH = r"saved_models_yolo_3d/label_encoder.pkl"
+MODEL_PATH = r"saved_models_yolo_3d\final_best_yolo_3d_model.h5" 
+ENCODER_PATH = r"saved_models_yolo_3d\label_encoder.pkl"
 YOLO_MODEL_PATH = "yolov8n-pose.pt"
-VIDEO_PATH = r"C:\Users\kccistc\Desktop\workspace\project\batter_output_results\choijung\녹음 2026-03-13 114629_fixed_target.mp4"
+VIDEO_PATH = r"C:\Users\kccistc\Desktop\녹음 2026-03-13 162139.mp4"
 
 pose_model = YOLO(YOLO_MODEL_PATH)
 action_model = tf.keras.models.load_model(MODEL_PATH)
