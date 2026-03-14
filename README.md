@@ -34,6 +34,7 @@ pitching_project/UI/UX
 │   │   ├── __init__.py
 │   │   ├── analysis.py         # 분석 결과 데이터베이스 모델
 │   │   ├── pitcher.py          # 투수 데이터베이스 모델
+│   │   ├── ranking             # 랭킹 데이터베이스 모델
 │   │   └── user.py             # 사용자 데이터베이스 모델   
 │   ├── routes/
 │   │   ├── __init__.py
@@ -68,12 +69,15 @@ pitching_project/UI/UX
 ├── ml_models/                  # 모델 저장 디렉토리
 └── data/
 ```
+- ranking.html 빨간줄떠도 실행 잘됨!!
 
 # 데이터베이스 구성
 ```mermaid
 erDiagram
     USER ||--o{ ANALYSIS : "1:N 관계"
     PITCHER ||--o{ ANALYSIS : "1:N 관계"
+    USER ||--o{ RANKING : "1:N 관계"
+    PITCHER ||--o{ RANKING : "1:N 관계"
 
     USER {
         Integer id PK
@@ -100,4 +104,26 @@ erDiagram
         String user_video_path
         DateTime created_at
     }
+    RANKING {
+        Integer id PK
+        Integer user_id FK
+        Integer pitcher_id FK
+        Float score
+        DateTime recorded_at
+    }
 ```
+
+# TODOLIST
+- 디자인 향상 (진행중)
+- 메인 화면에 새롭게
+- 새로운 로고 만들기
+- 파일 이름 변경 {
+    edit -> edit_profile,
+    result -> pitch_result,
+    upload -> pitch_upload
+}
+- 타격 폼 분석 페이지 만들기
+- hit_result, hit_upload 필요
+
+# 내일 할 일
+- 배틀 페이지 만들기

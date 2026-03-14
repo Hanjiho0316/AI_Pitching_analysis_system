@@ -4,6 +4,7 @@
 회원 전용 기능에는 @login_required 데코레이터를 사용합니다.
 """
 import os
+from PIL import Image
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
@@ -71,19 +72,41 @@ def edit_profile():
     업로드된 이미지는 고유한 파일명으로 변환되어 안전하게 저장됩니다.
     """
     if request.method == 'POST':
-        nickname = request.form.get('nickname')
+        new_nickname = request.form.get('nickname')
         profile_img = request.files.get('profile_image')
         
         if profile_img:
-            filename = secure_filename(f"user_{current_user.id}_{profile_img.filename}")
-            upload_path = os.path.join(current_app.config['BASE_DIR'], 'app/static/uploads/profiles')
-            os.makedirs(upload_path, exist_ok=True)
-            profile_img.save(os.path.join(upload_path, filename))
-            current_user.profile_image = f"uploads/profiles/{filename}"
+            ext = os.path.splitext(profile_img.filename)[1].lower()
+            if ext not in ['.png', '.jpg', '.jpeg']:
+                ext = '.png'
+            filename = f"image{ext}"
 
-        current_user.nickname = nickname
+            upload_path = os.path.join(current_app.root_path, 'static', 'uploads', 'profiles', str(current_user.id))
+            os.makedirs(upload_path, exist_ok=True)
+            
+            filepath = os.path.join(upload_path, filename)
+            
+            img = Image.open(profile_img)
+            
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+                
+            width, height = img.size
+            min_dim = min(width, height)
+            left = (width - min_dim) / 2
+            top = (height - min_dim) / 2
+            right = (width + min_dim) / 2
+            bottom = (height + min_dim) / 2
+            
+            img = img.crop((left, top, right, bottom))
+            img.save(filepath)
+            
+            current_user.profile_image = f"{current_user.id}/{filename}"
+
+        current_user.nickname = new_nickname
         db.session.commit()
         flash('정보가 성공적으로 수정되었습니다.')
+        
         return redirect(url_for('main.mypage', nickname=current_user.nickname))
         
     return render_template('edit.html')

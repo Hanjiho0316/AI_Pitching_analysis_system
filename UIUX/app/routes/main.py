@@ -6,7 +6,10 @@ import os
 from flask import Blueprint, render_template, request, redirect, url_for, current_app, flash
 from flask_login import login_required
 from app.services.ml_service import get_task_status
+from app.models.analysis import Analysis
 from app.models.pitcher import Pitcher 
+from app.models.ranking import Ranking
+from app.models.user import User
 
 
 main_bp = Blueprint('main', __name__)
@@ -22,6 +25,11 @@ def index():
 def upload():
     """투구 영상 업로드 화면을 렌더링합니다."""
     return render_template('upload.html')
+
+@main_bp.route('/battle')
+def battle():
+    """폼 대결 화면을 렌더링합니다."""
+    return render_template('battle.html')
 
 
 @main_bp.route('/result')
@@ -64,21 +72,35 @@ def result():
     
     if analysis_result['similarity'] < 0.0:
         return render_template('failure.html')
-
-    return render_template('result.html', result=analysis_result, pitcher=pitcher_info, filename=relative_filename)
+    
+    # 데이터베이스에서 점수 내림차순으로 상위 3명의 랭킹 데이터를 가져옵니다.
+    top_rankings = Ranking.query.order_by(Ranking.score.desc()).limit(3).all()
+    
+    # 렌더링 시 top_rankings 데이터를 함께 전달합니다.
+    return render_template('result.html', result=analysis_result, pitcher=pitcher_info, filename=relative_filename, top_rankings=top_rankings)
 
 
 @main_bp.route('/ranking')
 def ranking():
-    """유저들의 유사도 랭킹 화면을 렌더링합니다."""
-    return render_template('ranking.html')
+    """상위 10명의 랭킹 데이터를 점수 내림차순으로 가져옵니다."""
+    top_rankings = Ranking.query.order_by(Ranking.score.desc()).limit(10).all()
+    return render_template('ranking.html', rankings=top_rankings)
 
 
 @main_bp.route('/mypage/<nickname>')
 @login_required
 def mypage(nickname):
-    """특정 사용자의 마이페이지 화면을 렌더링합니다."""
-    return render_template('mypage.html', nickname=nickname)
+    """닉네임을 통해 사용자 정보를 가져옵니다."""
+    user = User.query.filter_by(nickname=nickname).first_or_404()
+    
+    # 다른 사람의 마이페이지 접근을 차단하고 싶다면 아래 주석을 해제하세요.
+    # if current_user.nickname != nickname:
+    #     flash('잘못된 접근입니다.')
+    #     return redirect(url_for('main.index'))
+        
+    recent_analyses = Analysis.query.filter_by(user_id=user.id).order_by(Analysis.created_at.desc()).limit(10).all()
+    
+    return render_template('mypage.html', user=user, analyses=recent_analyses)
 
 
 @main_bp.route('/settings')

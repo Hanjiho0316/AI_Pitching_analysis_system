@@ -26,8 +26,10 @@
             <button id="close-sidebar" class="close-btn" style="color: var(--text-primary);">&times;</button>
         </div>
         <nav class="sidebar-nav">
+            <a href="{{ url_for('main.upload') }}" class="sidebar-link">투구 폼 분석</a>
+            <a href="#" class="sidebar-link">타격 폼 분석</a>
             <a href="{{ url_for('main.ranking') }}" class="sidebar-link">랭킹 화면</a>
-            <a href="#" class="sidebar-link">투구 폼 대결</a>
+            <a href="#" class="sidebar-link">점수 대결</a>
         </nav>
         <div class="sidebar-footer">
             {% if current_user.is_authenticated %}
@@ -57,7 +59,7 @@
         <div class="nav-right">
             {% if current_user.is_authenticated %}
                 <a href="{{ url_for('main.mypage', nickname=current_user.nickname) }}" class="user-profile">
-                    <img src="{{ url_for('static', filename='images/' + current_user.profile_image) }}" alt="Profile" class="nav-icon" style="border-color: var(--text-primary);">
+                    <img src="{{ url_for('static', filename='uploads/profiles/' ~ current_user.profile_image) }}" alt="Profile" class="nav-icon" style="border-color: var(--text-primary);" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
                 </a>
             {% else %}
                 <a href="{{ url_for('auth.login') }}" class="nav-link" style="color: var(--text-primary);">가입/로그인</a>

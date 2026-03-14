@@ -1,37 +1,34 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <title>분석 시작 - PitchTypes</title>
-    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@700&display=swap" rel="stylesheet">
-    <style>
-        body { background: #f0f4f8; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: 'Pretendard'; }
-        .card { background: white; padding: 50px; border-radius: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); text-align: center; width: 450px; }
-        .drop-zone { border: 3px dashed #cbd5e0; padding: 60px; border-radius: 30px; background: #f8fafc; cursor: pointer; transition: 0.3s; margin-bottom: 30px; }
-        .drop-zone.dragover { background: #e2e8f0; border-color: #2e7d32; }
-        .btn { background: #2e7d32; color: white; border: none; padding: 20px; width: 100%; border-radius: 60px; font-size: 1.3rem; font-weight: 800; cursor: pointer; }
-        
-        #loading { display: none; margin-top: 20px; }
-        .hourglass { display: inline-block; font-size: 60px; animation: flip 2s infinite; }
-        @keyframes flip { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(180deg); } }
-        .timer-text { font-size: 1.2rem; color: #2e7d32; font-weight: bold; margin-top: 10px; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h1>분석 파일 선택</h1>
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .upload-wrapper { display: flex; justify-content: center; align-items: center; min-height: calc(100vh - 80px); }
+    .upload-card { background: var(--card-bg); padding: 50px; border-radius: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); text-align: center; width: 450px; border: 1px solid var(--border-color); }
+    .drop-zone { border: 3px dashed var(--border-color); padding: 60px; border-radius: 30px; background: var(--hover-bg); cursor: pointer; transition: 0.3s; margin-bottom: 30px; }
+    .drop-zone.dragover { background: var(--border-color); border-color: #2e7d32; }
+    .btn-upload { background: #2e7d32; color: white; border: none; padding: 20px; width: 100%; border-radius: 60px; font-size: 1.3rem; font-weight: 800; cursor: pointer; }
+    #loading { display: none; margin-top: 20px; }
+    .hourglass { display: inline-block; font-size: 60px; animation: flip 2s infinite; }
+    @keyframes flip { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(180deg); } }
+    .timer-text { font-size: 1.2rem; color: #2e7d32; font-weight: bold; margin-top: 10px; }
+</style>
+
+<div class="upload-wrapper">
+    <div class="upload-card">
+        <h1 style="color: var(--text-primary);">분석 파일 선택</h1>
         <form id="uploadForm" action="/upload" method="POST" enctype="multipart/form-data">
             <div id="dropZone" class="drop-zone">
-                <span id="fileName">영상을 이쪽으로 끌어오세요<br>(또는 클릭)</span>
+                <span id="fileName" style="color: var(--text-primary);">영상을 이쪽으로 끌어오세요<br>(또는 클릭)</span>
                 <input type="file" name="file" id="fileInput" style="display:none" accept="video/*">
             </div>
-            <button type="submit" class="btn">AI 분석 가동하기</button>
+            <button type="submit" class="btn-upload">AI 분석 가동하기</button>
         </form>
         <div id="loading">
             <div class="hourglass">⏳</div>
             <div class="timer-text">분석 중... <span id="timer">00분 00초</span></div>
         </div>
     </div>
+</div>
 
 <script>
     const dropZone = document.getElementById('dropZone');
@@ -54,14 +51,14 @@
     };
 
     document.getElementById('uploadForm').onsubmit = async function(e) {
-        e.preventDefault(); // 폼의 기본 페이지 이동 동작을 막습니다.
+        e.preventDefault();
         
         if (!fileInput.files.length) {
             alert('영상을 먼저 선택해주세요.');
             return;
         }
 
-        document.querySelector('.btn').style.display = 'none';
+        document.querySelector('.btn-upload').style.display = 'none';
         document.getElementById('loading').style.display = 'block';
         
         let sec = 0;
@@ -76,7 +73,6 @@
         formData.append('pitching_video', fileInput.files[0]);
 
         try {
-            // API 라우트로 비동기 전송을 시작합니다.
             const response = await fetch('/api/upload_async', {
                 method: 'POST',
                 body: formData
@@ -96,7 +92,6 @@
     };
 
     function checkTaskStatus(taskId, timerInterval) {
-        // 3초마다 서버에 작업이 끝났는지 물어봅니다.
         const statusInterval = setInterval(async () => {
             const response = await fetch(`/api/status/${taskId}`);
             const data = await response.json();
@@ -104,7 +99,6 @@
             if (data.status === 'completed') {
                 clearInterval(statusInterval);
                 clearInterval(timerInterval);
-                // 분석이 끝나면 결과 페이지로 이동하며 task_id를 전달합니다.
                 window.location.href = `/result?task_id=${taskId}`;
             } else if (data.status === 'error') {
                 clearInterval(statusInterval);
@@ -115,5 +109,4 @@
         }, 3000);
     }
 </script>
-</body>
-</html>
+{% endblock %}

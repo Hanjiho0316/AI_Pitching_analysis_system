@@ -1,32 +1,97 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<main class="main-container">
-    <section style="text-align: center; margin-bottom: 3rem; padding-top: 2rem;">
-        <div style="margin-bottom: 1.5rem;">
-            <img src="{{ url_for('static', filename='images/' + current_user.profile_image) }}" 
-                 style="width: 110px; height: 110px; border-radius: 50%; border: 1px solid var(--border-color); object-fit: cover;">
-        </div>
-        <h2 style="font-weight: 400; font-size: 1.6rem; color: var(--text-primary);">{{ nickname }} 사용자님</h2>
-        <p style="color: var(--text-secondary); font-size: 1rem; margin-top: 0.5rem;">{{ current_user.email }}</p>
-    </section>
+<style>
+    /* 배경의 눈부심을 줄이고 미니멀한 카드 형태의 래퍼를 추가합니다. */
+    .mypage-wrapper {
+        max-width: 800px; 
+        margin: 40px auto; 
+        background-color: var(--hover-bg); /* 밝은 회색 또는 다크모드 대응 */
+        border-radius: 24px;
+        padding: 40px;
+    }
+    
+    .profile-header { 
+        display: flex; align-items: center; gap: 30px; margin-bottom: 50px; 
+        background: var(--card-bg); padding: 30px; border-radius: 20px; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03); 
+    }
+    .profile-img { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; }
+    .profile-info h2 { font-size: 2rem; color: var(--text-primary); margin-bottom: 10px; font-weight: 700; }
+    .profile-info p { color: var(--text-secondary); font-size: 1.1rem; }
+    .best-score-text { font-weight: 700; color: #2e7d32; }
+    
+    .btn-edit { 
+        display: inline-block; margin-top: 15px; padding: 10px 25px; border-radius: 30px; 
+        background: var(--button-bg); color: var(--button-text); text-decoration: none; 
+        transition: transform 0.2s; 
+    }
+    
+    /* 헤딩 좌측 여백 문제 해결 및 미니멀한 바 디자인 추가 */
+    .section-title { 
+        font-size: 1.3rem; 
+        color: var(--text-primary); 
+        margin-bottom: 20px; 
+        padding-left: 12px; 
+        border-left: 4px solid var(--text-primary); 
+        line-height: 1.2;
+    }
+    
+    .history-list { display: flex; flex-direction: column; gap: 12px; }
+    .history-item { 
+        display: flex; align-items: center; justify-content: space-between; 
+        background: var(--card-bg); padding: 20px 25px; border-radius: 16px; 
+        border: 1px solid var(--border-color);
+        transition: transform 0.2s; 
+    }
+    .history-item:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    
+    .history-left { display: flex; align-items: center; gap: 20px; }
+    .history-pitcher-img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
+    .history-details { display: flex; flex-direction: column; gap: 4px; }
+    .history-details h4 { color: var(--text-primary); font-size: 1.1rem; margin: 0; }
+    .history-details p { color: var(--text-secondary); font-size: 0.9rem; margin: 0; }
+    
+    .history-score { font-size: 1.4rem; font-weight: 700; color: var(--text-primary); }
+</style>
 
-    <section style="max-width: 500px; width: 100%; margin: 0 auto 3rem auto;">
-        <h3 style="font-weight: 400; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 20px; color: var(--text-primary);">최근 분석 기록</h3>
-        <div style="color: var(--text-secondary); text-align: center; padding: 50px 0; background-color: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
-            아직 분석 기록이 없습니다.
+<div class="mypage-wrapper">
+    <div class="profile-header">
+        <img src="{{ url_for('static', filename='uploads/profiles/' ~ user.profile_image) }}" alt="Profile" class="profile-img" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+        <div class="profile-info">
+            <h2>{{ user.nickname }}</h2>
+            <p>내 최고 유사도: <span class="best-score-text">{{ user.best_score }}%</span></p>
+            {% if current_user.nickname == user.nickname %}
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <a href="{{ url_for('auth.edit_profile') }}" class="btn-edit">프로필 및 설정 수정</a>
+                <a href="{{ url_for('auth.logout') }}" class="btn-edit" style="background-color: transparent; color: var(--danger-color); border: 1px solid var(--danger-color);">로그아웃</a>
+            </div>
+            {% endif %}
         </div>
-    </section>
+    </div>
 
-    <section style="max-width: 500px; width: 100%; margin: 0 auto;">
-        <h3 style="font-weight: 400; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 20px; color: var(--text-primary);">계정 관리</h3>
-        <div class="account-actions">
-            <a href="{{ url_for('auth.edit_profile') }}" class="btn-account">프로필 정보 수정</a>
-            <a href="{{ url_for('auth.change_password') }}" class="btn-account">비밀번호 변경</a>
-            <form action="{{ url_for('auth.delete_account') }}" method="POST" style="margin: 0;" onsubmit="return confirm('정말 탈퇴하시겠습니까? 모든 분석 기록이 영구적으로 삭제됩니다.');">
-                <button type="submit" class="btn-danger-outline">회원 탈퇴</button>
-            </form>
-        </div>
-    </section>
-</main>
+    <h3 class="section-title">최근 분석 기록</h3>
+    <div class="history-list">
+        {% if analyses %}
+            {% for analysis in analyses %}
+            <div class="history-item">
+                <div class="history-left">
+                    <img src="{{ url_for('static', filename='images/pitchers/' ~ analysis.pitcher.name_en ~ '.jpg') }}" class="history-pitcher-img" alt="Pitcher" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+                    <div class="history-details">
+                        <h4>{{ analysis.pitcher.name_ko }}</h4>
+                        <p>{{ analysis.created_at.strftime('%Y년 %m월 %d일 %H:%M') }}</p>
+                    </div>
+                </div>
+                <div class="history-score">
+                    {{ analysis.similarity }}%
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div style="text-align: center; color: var(--text-secondary); padding: 40px; background: var(--card-bg); border-radius: 16px;">
+                아직 분석 기록이 없습니다.
+            </div>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

@@ -11,9 +11,10 @@ app = create_app()
 # 애플리케이션 컨텍스트 안에서 데이터베이스 테이블을 생성합니다.
 # 이미 pitching.db 파일과 테이블이 존재한다면 덮어쓰지 않고 넘어갑니다.
 with app.app_context():
-    from app.models.user import User
-    from app.models.pitcher import Pitcher
     from app.models.analysis import Analysis
+    from app.models.pitcher import Pitcher
+    from app.models.ranking import Ranking
+    from app.models.user import User
     db.create_all()
 
 if __name__ == '__main__':
