@@ -41,7 +41,7 @@ MAX_FRAMES = 60
 NUM_JOINTS = 13   
 CHANNELS = 6      
 BATCH_SIZE = 128  
-EPOCHS = 200      
+EPOCHS = 2000      
 K_FOLDS = 5  
 
 # [중요] 누락되었던 변수 정의
@@ -171,8 +171,11 @@ for fold_no, (train_idx, val_idx) in enumerate(skf.split(X_raw, y_int), 1):
         X_train, y_train = apply_3d_augmentation(X_train, y_train)
     
     model = build_model(num_classes)
-    model.compile(optimizer=optimizers.Adam(1e-3), loss='categorical_crossentropy', metrics=['accuracy'])
-    
+    model.compile(
+        optimizer=optimizers.Adam(learning_rate=1e-4),
+        loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.1), 
+        metrics=['accuracy']
+        )
     # 폴드별 임시 저장 경로
     temp_fold_path = os.path.join(MODEL_SAVE_DIR, f"temp_fold_{fold_no}.h5")
     checkpoint = tf.keras.callbacks.ModelCheckpoint(
