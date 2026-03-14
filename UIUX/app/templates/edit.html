@@ -1,29 +1,146 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="auth-container">
-    <h2 class="auth-title">프로필 정보 수정</h2>
+<style>
+    .edit-wrapper {
+        max-width: 600px;
+        margin: 40px auto;
+        background-color: var(--hover-bg);
+        border-radius: 24px;
+        padding: 50px 40px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    }
+    .profile-preview-container {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .profile-preview-img {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid var(--card-bg);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    .upload-zone {
+        position: relative;
+        border: 2px dashed var(--border-color);
+        border-radius: 16px;
+        padding: 30px 20px;
+        text-align: center;
+        background-color: var(--card-bg);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 15px;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+        border-color: var(--text-primary);
+        background-color: var(--hover-bg);
+    }
+    .upload-zone input[type="file"] {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+    .upload-text {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        margin-top: 10px;
+    }
+    .minimal-input {
+        width: 100%;
+        padding: 15px;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        font-size: 1rem;
+        background-color: var(--card-bg);
+        color: var(--text-primary);
+        margin-bottom: 20px;
+        transition: border-color 0.3s;
+    }
+    .minimal-input:focus {
+        border-color: var(--text-primary);
+        outline: none;
+    }
+</style>
+
+<div class="edit-wrapper">
+    <h2 class="auth-title" style="margin-bottom: 30px;">프로필 및 설정 수정</h2>
     
-    <form action="{{ url_for('auth.edit_profile') }}" method="post" enctype="multipart/form-data" class="auth-form">
-        <div style="margin-bottom: 1.5rem;">
-            <img src="{{ url_for('static', filename='images/' + current_user.profile_image) }}" 
-                 style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); margin-bottom: 10px;">
-            <div style="text-align: left;">
-                <label for="profile_image" style="color: var(--text-secondary); font-size: 0.9rem; display: block; margin-bottom: 5px;">프로필 이미지 변경</label>
-                <input type="file" name="profile_image" id="profile_image" accept="image/*" style="width: 100%; padding: 0.5rem;">
-            </div>
+    <div class="profile-preview-container">
+        <img id="profilePreview" src="{{ url_for('static', filename='uploads/profiles/' ~ current_user.profile_image) }}" alt="Current Profile" class="profile-preview-img" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+        <input type="text" name="nickname" value="{{ current_user.nickname }}" placeholder="새로운 닉네임" required class="minimal-input">
+        
+        <div class="upload-zone" id="dropZone">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary);">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <div class="upload-text" id="uploadText">클릭하거나 이미지를 여기로 드래그하세요</div>
+            <input type="file" name="profile_image" id="profile_image" accept="image/*">
         </div>
 
-        <div style="text-align: left; margin-bottom: 1.5rem;">
-            <label for="nickname" style="color: var(--text-secondary); font-size: 0.9rem; display: block; margin-bottom: 5px;">닉네임</label>
-            <input type="text" name="nickname" id="nickname" value="{{ current_user.nickname }}" required style="width: 100%;">
-        </div>
-        
-        <button type="submit" class="submit-button">수정 완료</button>
+        <button type="submit" class="submit-button" style="width: 100%; padding: 15px; border-radius: 12px; font-size: 1.05rem; margin-top: 30px;">정보 수정하기</button>
     </form>
     
-    <div style="margin-top: 1.5rem;">
-        <a href="{{ url_for('main.mypage', nickname=current_user.nickname) }}" style="color: var(--text-secondary); text-decoration: none; border-bottom: 1px solid var(--text-secondary);">취소하고 돌아가기</a>
+    <div class="account-actions" style="margin-top: 20px; gap: 10px;">
+        <a href="{{ url_for('auth.change_password') }}" class="btn-account" style="border-radius: 12px;">비밀번호 변경</a>
+        <form action="{{ url_for('auth.delete_account') }}" method="POST" onsubmit="return confirm('정말로 탈퇴하시겠습니까? 삭제된 데이터는 복구할 수 없습니다.');">
+            <button type="submit" class="btn-danger-outline" style="border-radius: 12px;">회원 탈퇴</button>
+        </form>
     </div>
 </div>
+
+<script>
+    const fileInput = document.getElementById('profile_image');
+    const profilePreview = document.getElementById('profilePreview');
+    const dropZone = document.getElementById('dropZone');
+    const uploadText = document.getElementById('uploadText');
+
+    function updatePreview(file) {
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                profilePreview.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+            uploadText.innerText = file.name;
+        }
+    }
+
+    fileInput.addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            updatePreview(this.files[0]);
+        }
+    });
+
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            fileInput.files = e.dataTransfer.files; 
+            updatePreview(e.dataTransfer.files[0]);
+        }
+    });
+</script>
 {% endblock %}

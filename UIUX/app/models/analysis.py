@@ -23,3 +23,5 @@ class Analysis(db.Model):
     similarity = db.Column(db.Float, nullable=False)
     user_video_path = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.now())
+    
+    pitcher = db.relationship('Pitcher', backref='analysis_records')

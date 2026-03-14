@@ -89,7 +89,7 @@ def upload_async():
         
         # 사용자별 폴더 경로 설정 (비로그인 사용자는 guest 폴더로 분류)
         if current_user.is_authenticated:
-            user_folder = current_user.nickname
+            user_folder = str(current_user.id)
         else:
             user_folder = "guest"
             

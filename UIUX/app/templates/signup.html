@@ -2,11 +2,11 @@
 
 {% block content %}
 <div class="auth-container">
-    <h2 class="auth-title">회원가입</h2>
+    <h2 class="auth-title" style="margin-bottom: 20px;">회원가입</h2>
     
     {% with messages = get_flashed_messages() %}
       {% if messages %}
-        <ul style="list-style: none; padding: 0; color: #d9534f; margin-bottom: 15px; font-size: 0.9rem;">
+        <ul style="list-style: none; padding: 0; color: var(--danger-color); margin-bottom: 20px; font-size: 0.9rem;">
         {% for message in messages %}
           <li>{{ message }}</li>
         {% endfor %}
@@ -20,21 +20,21 @@
             <span id="email-feedback" style="font-size: 0.8rem; margin-top: 5px; min-height: 15px;"></span>
         </div>
         
-        <div style="display: flex; flex-direction: column; text-align: left; margin-top: 10px;">
+        <div style="display: flex; flex-direction: column; text-align: left; margin-top: 5px;">
             <input type="text" name="nickname" id="nickname" placeholder="사용하실 닉네임을 입력하세요" required>
             <span id="nickname-feedback" style="font-size: 0.8rem; margin-top: 5px; min-height: 15px;"></span>
         </div>
         
-        <div style="margin-top: 10px;">
+        <div style="margin-top: 5px;">
             <input type="password" name="password" placeholder="비밀번호를 입력하세요" required style="width: 100%;">
         </div>
         
-        <button type="submit" class="submit-button">가입하기</button>
+        <button type="submit" class="submit-button" style="width: 100%; padding: 15px; border-radius: 12px; font-size: 1.05rem; margin-top: 15px;">가입하기</button>
     </form>
     
-    <div class="auth-footer">
-        <span>이미 계정이 있으신가요?</span>
-        <a href="{{ url_for('auth.login') }}">로그인</a>
+    <div class="auth-footer" style="margin-top: 25px; font-size: 0.95rem;">
+        <span style="color: var(--text-secondary);">이미 계정이 있으신가요?</span>
+        <a href="{{ url_for('auth.login') }}" style="color: var(--text-primary); font-weight: 500; text-decoration: none; margin-left: 5px; border-bottom: 1px solid var(--text-primary); padding-bottom: 2px;">로그인</a>
     </div>
 </div>
 

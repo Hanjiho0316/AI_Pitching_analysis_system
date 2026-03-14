@@ -33,7 +33,7 @@ UIUX/app/static/results/*
 !UIUX/app/static/results/.gitkeep
 
 # 데이터베이스 관련
-UIUX/*.db
+*.db
 
 # OS 및 에디터 관련
 .DS_Store

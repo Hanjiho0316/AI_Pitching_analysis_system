@@ -1,96 +1,124 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<style>
+    .ranking-wrapper {
+        width: 100%;
+        max-width: 1200px;
+        margin: 40px auto;
+        background-color: var(--hover-bg);
+        border-radius: 24px;
+        padding: 120px 40px 50px 40px; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .rank-1 { order: 2; z-index: 3; }
+
+    .ranking-header { margin-bottom: 100px; }
+
+    .list-text-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-left: 15px;
+    }
+
+    .rank-1 .pitcher-avatar, .rank-1 .user-avatar { border-color: #FFD700 !important; }
+    .rank-2 .pitcher-avatar, .rank-2 .user-avatar { border-color: #C0C0C0 !important; }
+    .rank-3 .pitcher-avatar, .rank-3 .user-avatar { border-color: #CD7F32 !important; }
+    </style>
+
 <main class="main-container ranking-page">
     <div class="ranking-header">
         <h2 class="ranking-title">명예의 전당</h2>
         <p class="ranking-subtitle">최고의 싱크로율을 자랑하는 투수들을 만나보세요</p>
     </div>
 
-    <div class="podium-container">
-        {% if rankings|length >= 2 %}
-        <div class="podium-item rank-2">
-            <div class="crown silver-crown">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
+    <div class="ranking-wrapper">
+        <div class="podium-container">
+            {% if rankings|length >= 2 %}
+            <div class="podium-item rank-2">
+                <div class="crown silver-crown">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
+                </div>
+                <div class="avatar-group">
+                    <img src="{{ url_for('static', filename='images/pitchers/' ~ rankings[1].pitcher.name_en ~ '.jpg') }}" class="pitcher-avatar" alt="Pitcher" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+                    <img src="{{ url_for('static', filename='uploads/profiles/' ~ rankings[1].user.profile_image) }}" class="user-avatar" alt="User" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+                </div>
+                <div class="ranking-info">
+                    <span class="rank-name">{{ rankings[1].user.nickname }}</span>
+                    <span class="pitcher-name">{{ rankings[1].pitcher.name_ko }}</span>
+                    <span class="rank-score">{{ rankings[1].score }}%</span>
+                </div>
+                <div class="podium-base base-2">2</div>
             </div>
-            <div class="avatar-group">
-                <img src="{{ url_for('static', filename='images/pitchers/' ~ rankings[1].pitcher.name_en ~ '.jpg') }}" class="pitcher-avatar" alt="Pitcher" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
-                <img src="{{ url_for('static', filename='images/uploads/profiles/' ~ rankings[1].user.profile_image) }}" class="user-avatar" alt="User" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
-            </div>
-            <div class="ranking-info">
-                <span class="rank-name">{{ rankings[1].user.nickname }}</span>
-                <span class="pitcher-name">{{ rankings[1].pitcher.name_ko }}</span>
-                <span class="rank-score">{{ rankings[1].score }}%</span>
-            </div>
-            <div class="podium-base base-2">2</div>
-        </div>
-        {% endif %}
+            {% endif %}
 
-        {% if rankings|length >= 1 %}
-        <div class="podium-item rank-1">
-            <div class="crown gold-crown">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
+            {% if rankings|length >= 1 %}
+            <div class="podium-item rank-1">
+                <div class="crown gold-crown">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
+                </div>
+                <div class="avatar-group">
+                    <img src="{{ url_for('static', filename='images/pitchers/' ~ rankings[0].pitcher.name_en ~ '.jpg') }}" class="pitcher-avatar" alt="Pitcher" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+                    <img src="{{ url_for('static', filename='uploads/profiles/' ~ rankings[0].user.profile_image) }}" class="user-avatar" alt="User" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+                </div>
+                <div class="ranking-info">
+                    <span class="rank-name">{{ rankings[0].user.nickname }}</span>
+                    <span class="pitcher-name">{{ rankings[0].pitcher.name_ko }}</span>
+                    <span class="rank-score">{{ rankings[0].score }}%</span>
+                </div>
+                <div class="podium-base base-1">1</div>
             </div>
-            <div class="avatar-group">
-                <img src="{{ url_for('static', filename='images/pitchers/' ~ rankings[0].pitcher.name_en ~ '.jpg') }}" class="pitcher-avatar" alt="Pitcher" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
-                <img src="{{ url_for('static', filename='images/uploads/profiles/' ~ rankings[0].user.profile_image) }}" class="user-avatar" alt="User" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
-            </div>
-            <div class="ranking-info">
-                <span class="rank-name">{{ rankings[0].user.nickname }}</span>
-                <span class="pitcher-name">{{ rankings[0].pitcher.name_ko }}</span>
-                <span class="rank-score">{{ rankings[0].score }}%</span>
-            </div>
-            <div class="podium-base base-1">1</div>
-        </div>
-        {% endif %}
+            {% endif %}
 
-        {% if rankings|length >= 3 %}
-        <div class="podium-item rank-3">
-            <div class="crown bronze-crown">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
+            {% if rankings|length >= 3 %}
+            <div class="podium-item rank-3">
+                <div class="crown bronze-crown">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
+                </div>
+                <div class="avatar-group">
+                    <img src="{{ url_for('static', filename='images/pitchers/' ~ rankings[2].pitcher.name_en ~ '.jpg') }}" class="pitcher-avatar" alt="Pitcher" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+                    <img src="{{ url_for('static', filename='uploads/profiles/' ~ rankings[2].user.profile_image) }}" class="user-avatar" alt="User" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+                </div>
+                <div class="ranking-info">
+                    <span class="rank-name">{{ rankings[2].user.nickname }}</span>
+                    <span class="pitcher-name">{{ rankings[2].pitcher.name_ko }}</span>
+                    <span class="rank-score">{{ rankings[2].score }}%</span>
+                </div>
+                <div class="podium-base base-3">3</div>
             </div>
-            <div class="avatar-group">
-                <img src="{{ url_for('static', filename='images/pitchers/' ~ rankings[2].pitcher.name_en ~ '.jpg') }}" class="pitcher-avatar" alt="Pitcher" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
-                <img src="{{ url_for('static', filename='images/uploads/profiles/' ~ rankings[2].user.profile_image) }}" class="user-avatar" alt="User" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
-            </div>
-            <div class="ranking-info">
-                <span class="rank-name">{{ rankings[2].user.nickname }}</span>
-                <span class="pitcher-name">{{ rankings[2].pitcher.name_ko }}</span>
-                <span class="rank-score">{{ rankings[2].score }}%</span>
-            </div>
-            <div class="podium-base base-3">3</div>
+            {% endif %}
         </div>
-        {% endif %}
-    </div>
 
-    <div class="ranking-list" id="ranking-list">
-        {% for i in range(3, rankings|length) %}
-        <div class="list-item" style="background-image: linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 100%), url('{{ url_for('static', filename='images/pitchers/' ~ rankings[i].pitcher.name_en ~ '.jpg') }}');">
-            <div class="list-left">
-                <span class="list-rank-num">{{ i + 1 }}</span>
-                <img src="{{ url_for('static', filename='images/uploads/profiles/' ~ rankings[i].user.profile_image) }}" class="list-user-avatar" alt="User" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
-                <div class="list-text-info">
-                    <span class="list-nickname">{{ rankings[i].user.nickname }}</span>
-                    <span class="list-pitcher">{{ rankings[i].pitcher.name_ko }}</span>
+        <div class="ranking-list" id="ranking-list">
+            {% for i in range(3, rankings|length) %}
+            <div class="list-item" style="background-image: linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 100%), url('{{ url_for('static', filename='images/pitchers/' ~ rankings[i].pitcher.name_en ~ '.jpg') }}');">
+                <div class="list-left">
+                    <span class="list-rank-num">{{ i + 1 }}</span>
+                    <img src="{{ url_for('static', filename='uploads/profiles/' ~ rankings[i].user.profile_image) }}" class="list-user-avatar" alt="User" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+                    <div class="list-text-info">
+                        <span class="list-nickname">{{ rankings[i].user.nickname }}</span>
+                        <span class="list-pitcher">{{ rankings[i].pitcher.name_ko }}</span>
+                    </div>
+                </div> <div class="list-right">
+                    <span class="list-score">{{ rankings[i].score }}%</span>
                 </div>
             </div>
-            <div class="list-right">
-                <span class="list-score">{{ rankings[i].score }}%</span>
-            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
-    </div>
-
-    <div id="loading-indicator" class="loading-hidden">
+    </div> <div id="loading-indicator" class="loading-hidden">
         <div class="spinner"></div>
     </div>
 </main>
 
 <script>
+    /* 자바스크립트는 기존과 동일하게 유지하되, 무한 스크롤 생성 부분 클래스명만 맞춤 확인됨 */
     let currentOffset = 10;
     let isFetching = false;
-    
-    // 서버에서 렌더링될 때, 현재 랭킹 데이터가 10개 미만이면 hasMoreData를 처음부터 false로 설정합니다.
     let hasMoreData = {{ 'true' if rankings|length >= 10 else 'false' }};
 
     window.addEventListener('scroll', () => {
@@ -117,13 +145,12 @@
                     const actualRank = currentOffset + index + 1;
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'list-item fade-in';
-                    
                     itemDiv.style.backgroundImage = `linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 100%), url('/static/images/pitchers/${rank.pitcher_image}')`;
 
                     itemDiv.innerHTML = `
                         <div class="list-left">
                             <span class="list-rank-num">${actualRank}</span>
-                            <img src="/static/images/uploads/profiles/${rank.profile_image}" class="list-user-avatar" alt="User" onerror="this.src='/static/images/default_logo.png'">
+                            <img src="/static/uploads/profiles/${rank.profile_image}" class="list-user-avatar" alt="User" onerror="this.src='/static/images/default_logo.png'">
                             <div class="list-text-info">
                                 <span class="list-nickname">${rank.nickname}</span>
                                 <span class="list-pitcher">${rank.pitcher_name}</span>
@@ -141,7 +168,6 @@
             console.error('데이터 로드 실패', error);
         } finally {
             isFetching = false;
-            // 데이터를 다 불러왔거나 실패하더라도 스피너를 다시 숨깁니다.
             document.getElementById('loading-indicator').classList.add('loading-hidden');
         }
     }
