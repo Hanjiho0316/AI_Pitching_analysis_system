@@ -126,7 +126,16 @@
             if (data.status === 'completed') {
                 clearInterval(statusInterval);
                 clearInterval(timerInterval);
-                window.location.href = `/result_pitch?task_id=${taskId}`;
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                const targetId = urlParams.get('target_id');
+                
+                if (targetId) {
+                    window.location.href = `/result_battle?task_id=${taskId}&target_id=${targetId}`;
+                } else {
+                    // 주의: upload_hit.html 파일에서는 아래 경로를 /result_hit 으로 변경해 주십시오.
+                    window.location.href = `/result_pitch?task_id=${taskId}`;
+                }
             } else if (data.status === 'error') {
                 clearInterval(statusInterval);
                 clearInterval(timerInterval);

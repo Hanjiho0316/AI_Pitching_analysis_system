@@ -35,7 +35,7 @@ def upload_hit():
 
 @main_bp.route('/battle')
 def battle():
-    """폼 대결 화면을 렌더링합니다."""
+    """고스트 대결 메인 화면을 렌더링합니다."""
     return render_template('battle.html')
 
 
@@ -72,7 +72,7 @@ def result_pitch():
             'name_en': 'default'
         }
     
-    if analysis_result['similarity'] < 0.0:
+    if analysis_result['similarity'] < 3.0:
         return render_template('failure.html')
     
     top_rankings = PitcherRanking.query.order_by(PitcherRanking.score.desc()).limit(3).all()
@@ -114,13 +114,83 @@ def result_hit():
             'name_en': 'default'
         }
     
-    if analysis_result['similarity'] < 0.0:
+    if analysis_result['similarity'] < 3.0:
         return render_template('failure.html')
     
     from app.models.ranking import HitterRanking
     top_rankings = HitterRanking.query.order_by(HitterRanking.score.desc()).limit(3).all()
     
     return render_template('result_hit.html', result=analysis_result, hitter=hitter_info, filename=relative_filename, top_rankings=top_rankings)
+
+
+@main_bp.route('/result_battle')
+def result_battle():
+    """대결 결과를 판정하고 전용 결과 화면을 렌더링합니다."""
+    task_id = request.args.get('task_id')
+    target_id = request.args.get('target_id')
+    
+    if not task_id or not target_id:
+        flash('잘못된 대결 접근입니다.')
+        return redirect(url_for('main.battle'))
+        
+    from app.services.ml_service import get_task_status
+    task_info = get_task_status(task_id)
+    
+    if task_info['status'] != 'completed':
+        flash('분석이 아직 완료되지 않았습니다.')
+        return redirect(url_for('main.index'))
+    
+    # 내 분석 결과 파싱
+    my_result = task_info['result']
+    my_score = my_result['similarity']
+    my_type = task_info.get('analysis_type', 'pitch')
+    
+    # 상대방 분석 기록 조회
+    from app.models.analysis import Analysis
+    target_record = Analysis.query.get(target_id)
+    
+    if not target_record:
+        flash('상대방의 기록을 찾을 수 없습니다.')
+        return redirect(url_for('main.battle'))
+        
+    target_score = target_record.similarity
+    
+    # 승패 판정
+    if my_score > target_score:
+        match_result = "WIN"
+    elif my_score < target_score:
+        match_result = "LOSE"
+    else:
+        match_result = "DRAW"
+        
+    # 상대방 선수 이미지 및 이름 정보 가공
+    if target_record.analysis_type == 'pitch' and target_record.pitcher:
+        target_player_name = target_record.pitcher.name_ko
+        target_player_img = f"pitchers/{target_record.pitcher.name_en}.jpg"
+    elif target_record.analysis_type == 'hit' and target_record.hitter:
+        target_player_name = target_record.hitter.name_ko
+        target_player_img = f"hitters/{target_record.hitter.name_en}.jpg"
+    else:
+        target_player_name = "알 수 없음"
+        target_player_img = "default_logo.png"
+        
+    # 내 선수 이미지 및 이름 정보 가공
+    if my_type == 'hit':
+        from app.models.hitter import Hitter
+        my_player = Hitter.query.filter_by(model_label=my_result['player_img']).first()
+        my_folder = 'hitters'
+    else:
+        from app.models.pitcher import Pitcher
+        my_player = Pitcher.query.filter_by(model_label=my_result['player_img']).first()
+        my_folder = 'pitchers'
+        
+    my_player_name = my_player.name_ko if my_player else my_result['match_player']
+    my_player_img = f"{my_folder}/{my_player.name_en}.jpg" if my_player else "default_logo.png"
+    
+    return render_template('result_battle.html', 
+                           my_score=my_score, my_player_name=my_player_name, my_player_img=my_player_img,
+                           target=target_record, target_player_name=target_player_name, target_player_img=target_player_img,
+                           match_result=match_result)
 
 
 @main_bp.route('/ranking')

@@ -175,3 +175,49 @@ def get_rankings():
             })
             
     return jsonify(result)
+
+
+@api_bp.route('/battle_feed', methods=['GET'])
+def get_battle_feed():
+    """
+    대결 화면의 실시간 피드 및 검색 결과를 반환합니다.
+    """
+    query = request.args.get('q', '')
+    
+    from app.models.analysis import Analysis
+    from app.models.user import User
+    
+    base_query = Analysis.query.join(User).order_by(Analysis.created_at.desc())
+    
+    if query:
+        base_query = base_query.filter(User.nickname.ilike(f'%{query}%'))
+        
+    recent_analyses = base_query.limit(30).all()
+    
+    result = []
+    for analysis in recent_analyses:
+        if analysis.analysis_type == 'pitch' and analysis.pitcher:
+            player_name = analysis.pitcher.name_ko
+            player_img = analysis.pitcher.name_en + '.jpg'
+            folder = 'pitchers'
+        elif analysis.analysis_type == 'hit' and analysis.hitter:
+            player_name = analysis.hitter.name_ko
+            player_img = analysis.hitter.name_en + '.jpg'
+            folder = 'hitters'
+        else:
+            player_name = '알 수 없음'
+            player_img = 'default_logo.png'
+            folder = 'pitchers'
+            
+        result.append({
+            'analysis_id': analysis.id,
+            'nickname': analysis.user.nickname,
+            'profile_image': analysis.user.profile_image,
+            'type': analysis.analysis_type,
+            'score': analysis.similarity,
+            'player_name': player_name,
+            'player_image': f"/static/images/{folder}/{player_img}",
+            'time': analysis.created_at.strftime('%Y-%m-%d %H:%M')
+        })
+        
+    return jsonify(result)

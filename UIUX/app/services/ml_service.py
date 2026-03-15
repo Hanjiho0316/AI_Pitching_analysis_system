@@ -7,13 +7,14 @@ import os
 import cv2
 import mediapipe as mp
 import numpy as np
+import math
 import pandas as pd
 import joblib
 import tensorflow as tf
-from collections import deque
-from ultralytics import YOLO
 import threading
 import uuid
+from collections import deque
+from ultralytics import YOLO
 from flask import current_app
 from app import db
 from app.models.analysis import Analysis
@@ -41,6 +42,20 @@ HIT_JOINT_INDICES = [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 
 # 비동기 작업의 상태와 결과를 임시 저장하는 딕셔너리
 task_store = {}
+
+
+def calibrate_score(raw_score, c=10):
+    """
+    모델의 원시 정확도(0~100)를 로그 스케일로 보정
+    """
+    if raw_score <= 0:
+        return 0.0
+    if raw_score >= 100:
+        return 100.0
+    
+    adjusted = 100 * (math.log10(c * raw_score + 1) / math.log10(c * 100 + 1))
+
+    return round(adjusted, 2)
 
 
 def get_detailed_analysis(df):
@@ -265,15 +280,17 @@ def process_video_background(task_id, filepath, ml_model_path, encoder_path, yol
             if is_recording and len(raw_data_accumulator) > 0 and prediction_name == "Unknown":
                 prediction_name, prediction_conf, analysis_data = predict_and_analyze_pitch(raw_data_accumulator, classifier_model, le)
 
-
         # ====================================================
         # 분석 결과 처리 및 데이터베이스 저장 공통 로직
         # ====================================================
         clean_name = prediction_name.replace('.mp4', '')
         clean_name = ''.join([i for i in clean_name if not i.isdigit()])
         
+        # 모델의 원시 점수(prediction_conf)를 로그 함수로 보정합니다.
+        adjusted_score = calibrate_score(prediction_conf)
+        
         task_store[task_id]['result'] = {
-            'similarity': round(prediction_conf, 1),
+            'similarity': adjusted_score,
             'match_player': clean_name,
             'player_img': prediction_name,
             'details': analysis_data
@@ -292,6 +309,7 @@ def process_video_background(task_id, filepath, ml_model_path, encoder_path, yol
                     hitter_info = Hitter.query.filter_by(model_label=prediction_name).first()
                     hitter_id = hitter_info.id if hitter_info else 1
                     
+                    # 분석 기록은 점수와 무관하게 무조건 저장합니다.
                     new_analysis = Analysis(
                         user_id=user_id,
                         analysis_type='hit',
@@ -301,13 +319,19 @@ def process_video_background(task_id, filepath, ml_model_path, encoder_path, yol
                     )
                     db.session.add(new_analysis)
                     
-                    # 최고 점수 갱신 여부와 무관하게 모든 분석을 랭킹에 기록합니다.
-                    new_ranking = HitterRanking(
-                        user_id=user_id,
-                        hitter_id=hitter_id,
-                        score=current_score
-                    )
-                    db.session.add(new_ranking)
+                    # 타격 랭킹 중복 방지 및 최고점 갱신 로직
+                    existing_ranking = HitterRanking.query.filter_by(user_id=user_id).first()
+                    if existing_ranking:
+                        if current_score > existing_ranking.score:
+                            existing_ranking.score = current_score
+                            existing_ranking.hitter_id = hitter_id
+                    else:
+                        new_ranking = HitterRanking(
+                            user_id=user_id,
+                            hitter_id=hitter_id,
+                            score=current_score
+                        )
+                        db.session.add(new_ranking)
                         
                 # 투구 분석 결과 DB 저장
                 else: 
@@ -317,6 +341,7 @@ def process_video_background(task_id, filepath, ml_model_path, encoder_path, yol
                     pitcher_info = Pitcher.query.filter_by(model_label=prediction_name).first()
                     pitcher_id = pitcher_info.id if pitcher_info else 1
                     
+                    # 분석 기록은 점수와 무관하게 무조건 저장합니다.
                     new_analysis = Analysis(
                         user_id=user_id,
                         analysis_type='pitch',
@@ -326,15 +351,21 @@ def process_video_background(task_id, filepath, ml_model_path, encoder_path, yol
                     )
                     db.session.add(new_analysis)
                     
-                    # 최고 점수 갱신 여부와 무관하게 모든 분석을 랭킹에 기록합니다.
-                    new_ranking = PitcherRanking(
-                        user_id=user_id,
-                        pitcher_id=pitcher_id,
-                        score=current_score
-                    )
-                    db.session.add(new_ranking)
+                    # 투구 랭킹 중복 방지 및 최고점 갱신 로직
+                    existing_ranking = PitcherRanking.query.filter_by(user_id=user_id).first()
+                    if existing_ranking:
+                        if current_score > existing_ranking.score:
+                            existing_ranking.score = current_score
+                            existing_ranking.pitcher_id = pitcher_id
+                    else:
+                        new_ranking = PitcherRanking(
+                            user_id=user_id,
+                            pitcher_id=pitcher_id,
+                            score=current_score
+                        )
+                        db.session.add(new_ranking)
                 
-                # 마이페이지 표기용 절대 최고 점수만 별도로 갱신합니다.
+                # 마이페이지 표기용 절대 최고 점수 갱신
                 if current_score > user.best_score:
                     user.best_score = current_score
                 
