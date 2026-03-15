@@ -22,6 +22,7 @@ python UIUX/app.py
 ```
 
 # 프로젝트 디렉토리 구성
+```
 pitching_project/UI/UX
 ├── app.py                      # 웹 실행
 ├── config.py                   # 설정값 저장 (투구/타격 모델 경로 분리)
@@ -78,7 +79,6 @@ pitching_project/UI/UX
 
 # 데이터베이스 구성
 ```mermaid
-erDiagram
 erDiagram
     USER ||--o{ ANALYSIS : "1:N 관계"
     PITCHER ||--o{ ANALYSIS : "1:N 관계"
