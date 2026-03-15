@@ -4,60 +4,66 @@
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <style>
     .result-container { max-width: 1200px; margin: 0 auto; padding: 40px; }
-    .header { text-align: center; margin-bottom: 50px; }
-    .score-badge { background: #2e7d32; padding: 15px 40px; border-radius: 50px; font-size: 2.2rem; font-weight: 900; display: inline-block; box-shadow: 0 10px 20px rgba(46, 125, 50, 0.4); color: white; }
-    .header h1 { color: var(--text-primary); }
+    
+    .header-card { background: var(--hover-bg); padding: 50px 40px; border-radius: 24px; text-align: center; margin-bottom: 50px; border: 1px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+    .match-title { font-size: 2rem; color: var(--text-primary); margin-bottom: 15px; letter-spacing: -0.02em; }
+    .highlight-text { color: #2e7d32; }
+    .sub-title { font-size: 1.1rem; color: var(--text-secondary); }
     
     .video-section { display: flex; gap: 25px; margin-bottom: 50px; flex-wrap: wrap; }
-    .video-card { background: var(--card-bg); padding: 20px; border-radius: 25px; flex: 1; border: 1px solid var(--border-color); min-width: 300px; }
-    .video-card h3 { color: var(--text-primary); }
-    video { width: 100%; border-radius: 15px; background: #000; }
+    .video-card { background: var(--card-bg); padding: 25px; border-radius: 24px; flex: 1; border: 1px solid var(--border-color); min-width: 300px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+    .video-card h3 { color: var(--text-primary); text-align: center; margin-top: 0; margin-bottom: 20px; font-size: 1.2rem; }
+    video { width: 100%; border-radius: 16px; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     
     .share-section { text-align: center; padding: 60px 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); margin-bottom: 50px; }
-    .share-section h2 { color: var(--text-primary); }
+    .share-section h2 { color: var(--text-primary); margin-bottom: 30px; font-size: 1.5rem; }
     
     #pitch-card { background: linear-gradient(145deg, #0f172a, #1e293b); width: 400px; padding: 0; border-radius: 25px; margin: 0 auto 30px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); border: 4px solid #ffd700; overflow: hidden; text-align: left; color: white; }
     .card-visual { position: relative; width: 100%; height: 300px; background: #000; overflow: hidden; }
     .card-player-img { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
-    .card-score-overlay { position: absolute; top: 20px; right: 20px; background: rgba(46, 125, 50, 0.9); padding: 10px 20px; border-radius: 15px; font-weight: 900; font-size: 1.5rem; border: 2px solid #ffd700; color: white; }
+    .card-score-overlay { position: absolute; top: 20px; right: 20px; background: rgba(46, 125, 50, 0.9); padding: 10px 20px; border-radius: 15px; font-size: 1.5rem; border: 2px solid #ffd700; color: white; }
     
     .card-body { padding: 25px; }
-    .card-title { font-size: 0.8rem; color: #ffd700; font-weight: 900; letter-spacing: 2px; margin-bottom: 5px; }
-    .card-player-name { font-size: 2rem; font-weight: 900; margin-bottom: 15px; }
-    .card-desc { background: rgba(255,255,255,0.07); padding: 15px; border-radius: 12px; border-left: 5px solid #ffd700; font-size: 1.05rem; line-height: 1.5; font-weight: 700; }
+    .card-title { font-size: 0.8rem; color: #ffd700; letter-spacing: 2px; margin-bottom: 5px; }
+    .card-player-name { font-size: 2rem; margin-bottom: 15px; }
+    .card-desc { background: rgba(255,255,255,0.07); padding: 15px; border-radius: 12px; border-left: 5px solid #ffd700; font-size: 1.05rem; line-height: 1.5; }
     
     .btn-group { display: flex; justify-content: center; gap: 15px; margin-top: 30px; }
-    .btn-action { padding: 15px 30px; border-radius: 50px; font-weight: 800; border: none; cursor: pointer; transition: 0.3s; text-decoration: none; display: inline-block; }
+    .btn-action { padding: 15px 30px; border-radius: 50px; border: none; cursor: pointer; transition: 0.3s; text-decoration: none; display: inline-block; font-size: 1.05rem; }
     .btn-save { background: #e63946; color: white; }
-    .btn-home { background: var(--text-primary); color: var(--bg-color); }
+    .btn-home { background: var(--button-bg); color: var(--button-text); }
+    .btn-action:hover { opacity: 0.9; transform: translateY(-2px); }
     
-    .ranking-card { background: var(--card-bg); padding: 30px; border-radius: 25px; border: 1px solid var(--border-color); color: var(--text-primary); }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
+    .ranking-card { background: var(--card-bg); padding: 35px; border-radius: 24px; border: 1px solid var(--border-color); color: var(--text-primary); box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
+    th { color: var(--text-secondary); font-size: 0.95rem; }
 </style>
 
 <div class="result-container">
-    <div class="header">
-        <div class="score-badge">{{ result.similarity }}% Match</div>
-        <h1>AI Pitching Analysis Report</h1>
+    <div class="header-card">
+        <h1 class="match-title">나의 투구 폼은 <span class="highlight-text">{{ pitcher.name_ko }}</span> 선수와 <span class="highlight-text">{{ result.similarity }}%</span> 일치합니다!</h1>
+        <p class="sub-title">AI가 분석한 투구 동작 유사도 비교 결과를 확인해 보세요.</p>
     </div>
 
     <div class="video-section">
         <div class="video-card">
-            <h3 style="margin-top: 0;">나의 투구 모습</h3>
+            <h3>나의 투구 모습</h3>
             <video autoplay loop muted playsinline>
                 <source src="{{ url_for('static', filename='uploads/' ~ filename) }}" type="video/mp4">
                 브라우저가 동영상을 지원하지 않습니다.
             </video>
         </div>
         <div class="video-card">
-            <h3 style="margin-top: 0;">{{ pitcher.name_ko }} 선수 투구 모습</h3>
-            <video autoplay loop muted playsinline><source src="{{ url_for('static', filename='videos/pitchers/' + pitcher.name_en + '.mp4') }}" type="video/mp4"></video>
+            <h3>{{ pitcher.name_ko }} 선수 투구 모습</h3>
+            <video autoplay loop muted playsinline>
+                <source src="{{ url_for('static', filename='videos/pitchers/' + pitcher.name_en + '.mp4') }}" type="video/mp4">
+            </video>
         </div>
     </div>
 
     <div class="share-section">
-        <h2 style="margin-top: 0;">분석 결과 카드</h2>
+        <h2>분석 결과 카드</h2>
         <div id="pitch-card">
             <div class="card-visual">
                 <img src="{{ url_for('static', filename='images/pitchers/' + pitcher.name_en + '.jpg') }}" class="card-player-img" alt="선수 이미지">
@@ -78,7 +84,7 @@
     </div>
 
     <div class="ranking-card">
-        <h3 style="margin-top: 0;">실시간 유사도 랭킹</h3>
+        <h3 style="margin-top: 0; font-size: 1.3rem;">실시간 유사도 랭킹</h3>
         <table>
             <tr><th>순위</th><th>사용자</th><th>선수</th><th>유사도</th></tr>
             {% for rank in top_rankings %}

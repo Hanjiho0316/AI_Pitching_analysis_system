@@ -15,13 +15,14 @@ class Analysis(db.Model):
         similarity (float): 모델이 계산한 투구 폼 유사도 (0~1 사이 값)
         user_video_path (str): 서버 내 저장된 사용자 업로드 영상의 상대 경로
     """
-    __tablename__ = 'analyses'
-    
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    pitcher_id = db.Column(db.Integer, db.ForeignKey('pitchers.id'), nullable=False)
+    analysis_type = db.Column(db.String(10), nullable=False, default='pitch')
+    pitcher_id = db.Column(db.Integer, db.ForeignKey('pitchers.id'), nullable=True)
+    hitter_id = db.Column(db.Integer, db.ForeignKey('hitters.id'), nullable=True)
     similarity = db.Column(db.Float, nullable=False)
     user_video_path = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.now())
+    created_at = db.Column(db.DateTime, default=datetime.now)
     
     pitcher = db.relationship('Pitcher', backref='analysis_records')
+    hitter = db.relationship('Hitter', backref='analysis_records')

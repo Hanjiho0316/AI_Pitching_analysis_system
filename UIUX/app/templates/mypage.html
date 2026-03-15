@@ -2,65 +2,150 @@
 
 {% block content %}
 <style>
-    /* 배경의 눈부심을 줄이고 미니멀한 카드 형태의 래퍼를 추가합니다. */
-    .mypage-wrapper {
-        max-width: 800px; 
-        margin: 40px auto; 
-        background-color: var(--hover-bg); /* 밝은 회색 또는 다크모드 대응 */
+    .mypage-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+    .profile-section {
+        background-color: var(--hover-bg);
         border-radius: 24px;
-        padding: 40px;
-    }
-    
-    .profile-header { 
-        display: flex; align-items: center; gap: 30px; margin-bottom: 50px; 
-        background: var(--card-bg); padding: 30px; border-radius: 20px; 
-        box-shadow: 0 4px 15px rgba(0,0,0,0.03); 
-    }
-    .profile-img { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; }
-    .profile-info h2 { font-size: 2rem; color: var(--text-primary); margin-bottom: 10px; font-weight: 700; }
-    .profile-info p { color: var(--text-secondary); font-size: 1.1rem; }
-    .best-score-text { font-weight: 700; color: #2e7d32; }
-    
-    .btn-edit { 
-        display: inline-block; margin-top: 15px; padding: 10px 25px; border-radius: 30px; 
-        background: var(--button-bg); color: var(--button-text); text-decoration: none; 
-        transition: transform 0.2s; 
-    }
-    
-    /* 헤딩 좌측 여백 문제 해결 및 미니멀한 바 디자인 추가 */
-    .section-title { 
-        font-size: 1.3rem; 
-        color: var(--text-primary); 
-        margin-bottom: 20px; 
-        padding-left: 12px; 
-        border-left: 4px solid var(--text-primary); 
-        line-height: 1.2;
-    }
-    
-    .history-list { display: flex; flex-direction: column; gap: 12px; }
-    .history-item { 
-        display: flex; align-items: center; justify-content: space-between; 
-        background: var(--card-bg); padding: 20px 25px; border-radius: 16px; 
+        padding: 50px 40px;
+        display: flex;
+        align-items: center;
+        gap: 40px;
+        margin-bottom: 50px;
         border: 1px solid var(--border-color);
-        transition: transform 0.2s; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
     }
-    .history-item:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
     
-    .history-left { display: flex; align-items: center; gap: 20px; }
-    .history-pitcher-img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
-    .history-details { display: flex; flex-direction: column; gap: 4px; }
-    .history-details h4 { color: var(--text-primary); font-size: 1.1rem; margin: 0; }
-    .history-details p { color: var(--text-secondary); font-size: 0.9rem; margin: 0; }
+    .profile-img {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        object-fit: cover;
+        object-position: center;
+        background-color: var(--card-bg);
+    }
+
+    /* 백엔드 조건에 따른 프로필 프레임 색상 */
+    .frame-gold { border: 5px solid #FFD700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); }
+    .frame-blue { border: 5px solid #1976d2; box-shadow: 0 0 15px rgba(25, 118, 210, 0.3); }
+    .frame-red { border: 5px solid #d32f2f; box-shadow: 0 0 15px rgba(211, 47, 47, 0.3); }
+    .frame-grey { border: 5px solid var(--divider-color); }
+
+    .profile-info h2 {
+        font-size: 2rem;
+        color: var(--text-primary);
+        margin-bottom: 10px;
+    }
+    .profile-info p {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        margin-bottom: 25px;
+    }
+    .best-score-text {
+        font-weight: 700;
+    }
     
-    .history-score { font-size: 1.4rem; font-weight: 700; color: var(--text-primary); }
+    .btn-edit {
+        display: inline-block;
+        padding: 12px 24px;
+        background-color: var(--button-bg);
+        color: var(--button-text);
+        border-radius: 50px;
+        text-decoration: none;
+        font-size: 1rem;
+        transition: 0.3s;
+    }
+    .btn-edit:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+    }
+    
+    .history-section h3 {
+        font-size: 1.4rem;
+        color: var(--text-primary);
+        margin-bottom: 25px;
+        padding-left: 10px;
+        border-left: 4px solid var(--text-primary);
+    }
+    
+    .history-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    .history-item {
+        background-color: var(--card-bg);
+        border-radius: 16px;
+        padding: 20px 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        transition: transform 0.2s ease;
+    }
+    .history-item:hover {
+        transform: translateY(-2px);
+    }
+    
+    /* 분석 종류에 따른 테두리 색상 */
+    .pitch-record { border: 2px solid #1976d2; }
+    .hit-record { border: 2px solid #d32f2f; }
+    
+    .history-left {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    .history-pitcher-img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1px solid var(--border-color);
+    }
+    .history-details h4 {
+        color: var(--text-primary);
+        font-size: 1.1rem;
+        margin-bottom: 5px;
+    }
+    .history-details p {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    .history-score {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    @media (max-width: 600px) {
+        .profile-section { flex-direction: column; text-align: center; gap: 20px; padding: 30px 20px; }
+        .history-item { flex-direction: column; align-items: flex-start; gap: 15px; }
+        .history-score { align-self: flex-end; }
+    }
 </style>
 
-<div class="mypage-wrapper">
-    <div class="profile-header">
-        <img src="{{ url_for('static', filename='uploads/profiles/' ~ user.profile_image) }}" alt="Profile" class="profile-img" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+<div class="mypage-container">
+    <div class="profile-section">
+        {% set profile_class = 'frame-grey' %}
+        {% if best_pitch >= 80 and best_hit >= 80 %}
+            {% set profile_class = 'frame-gold' %}
+        {% elif best_pitch > best_hit %}
+            {% set profile_class = 'frame-blue' %}
+        {% elif best_hit > best_pitch %}
+            {% set profile_class = 'frame-red' %}
+        {% elif best_pitch > 0 and best_pitch == best_hit %}
+            {% set profile_class = 'frame-blue' %}
+        {% endif %}
+
+        <img src="{{ url_for('static', filename='uploads/profiles/' ~ user.profile_image) }}" alt="Profile Image" class="profile-img {{ profile_class }}" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
         <div class="profile-info">
             <h2>{{ user.nickname }}</h2>
-            <p>내 최고 유사도: <span class="best-score-text">{{ user.best_score }}%</span></p>
+            <p>투구 최고 기록: <span class="best-score-text" style="color: #1976d2;">{{ best_pitch }}%</span> | 타격 최고 기록: <span class="best-score-text" style="color: #d32f2f;">{{ best_hit }}%</span></p>
+            
             {% if current_user.nickname == user.nickname %}
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <a href="{{ url_for('auth.edit_profile') }}" class="btn-edit">프로필 및 설정 수정</a>
@@ -70,28 +155,38 @@
         </div>
     </div>
 
-    <h3 class="section-title">최근 분석 기록</h3>
-    <div class="history-list">
-        {% if analyses %}
-            {% for analysis in analyses %}
-            <div class="history-item">
-                <div class="history-left">
-                    <img src="{{ url_for('static', filename='images/pitchers/' ~ analysis.pitcher.name_en ~ '.jpg') }}" class="history-pitcher-img" alt="Pitcher" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
-                    <div class="history-details">
-                        <h4>{{ analysis.pitcher.name_ko }}</h4>
-                        <p>{{ analysis.created_at.strftime('%Y년 %m월 %d일 %H:%M') }}</p>
+    <div class="history-section">
+        <h3>최근 분석 기록</h3>
+        <div class="history-list">
+            {% if analyses %}
+                {% for analysis in analyses %}
+                <div class="history-item {% if analysis.analysis_type == 'pitch' %}pitch-record{% else %}hit-record{% endif %}">
+                    <div class="history-left">
+                        {% if analysis.analysis_type == 'pitch' %}
+                            <img src="{{ url_for('static', filename='images/pitchers/' ~ analysis.pitcher.name_en ~ '.jpg') }}" class="history-pitcher-img" alt="Pitcher" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+                            <div class="history-details">
+                                <h4>{{ analysis.pitcher.name_ko }} (투수)</h4>
+                                <p>{{ analysis.created_at.strftime('%Y년 %m월 %d일 %H:%M') }}</p>
+                            </div>
+                        {% else %}
+                            <img src="{{ url_for('static', filename='images/hitters/' ~ analysis.hitter.name_en ~ '.jpg') }}" class="history-pitcher-img" alt="Hitter" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+                            <div class="history-details">
+                                <h4>{{ analysis.hitter.name_ko }} (타자)</h4>
+                                <p>{{ analysis.created_at.strftime('%Y년 %m월 %d일 %H:%M') }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="history-score">
+                        {{ analysis.similarity }}%
                     </div>
                 </div>
-                <div class="history-score">
-                    {{ analysis.similarity }}%
+                {% endfor %}
+            {% else %}
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px; background: var(--card-bg); border-radius: 16px; border: 1px dashed var(--border-color);">
+                    아직 분석 기록이 없습니다. 지금 바로 폼을 분석해 보세요!
                 </div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <div style="text-align: center; color: var(--text-secondary); padding: 40px; background: var(--card-bg); border-radius: 16px;">
-                아직 분석 기록이 없습니다.
-            </div>
-        {% endif %}
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}

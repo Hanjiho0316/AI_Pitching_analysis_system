@@ -7,11 +7,12 @@ Flask 앱 컨텍스트 내에서 실행되며, 기존에 데이터가 있는지 
 from app import create_app, db
 from app.models.analysis import Analysis
 from app.models.pitcher import Pitcher
+from app.models.hitter import Hitter # 타자 모델 임포트 추가
 from app.models.user import User
 
 # 모델에서 파싱될 소문자 라벨명 기준으로 중복을 제거한 데이터 리스트입니다.
 # 형식: {"model_label": "모델출력명(소문자)", "name_en": "공식영문명", "name_ko": "한글명", "desc": "특징"}
-SEED_DATA = [
+PITCHER_SEED_DATA = [
     {
         "model_label": "2011clifflee.mp4", 
         "name_en": "clifflee", 
@@ -488,22 +489,379 @@ SEED_DATA = [
     }
 ]
 
+HITTER_SEED_DATA = [
+    {
+        "model_label": "choijung",
+        "name_en": "choijeong",
+        "name_ko": "최정",
+        "desc": "SSG 거포의 대포 스윙"
+    },
+    {
+        "model_label": "KimHaseong",
+        "name_en": "kimhaseong",
+        "name_ko": "김하성",
+        "desc": "MLB를 흔드는 클러치타"
+    },
+    {
+        "model_label": "nasungbum",
+        "name_en": "nasungbum",
+        "name_ko": "나성범",
+        "desc": "호쾌하게 터지는 장타"
+    },
+    {
+        "model_label": "WillSmith",
+        "name_en": "willsmith",
+        "name_ko": "윌 스미스",
+        "desc": "침착하게 꽂는 정밀타"
+    },
+    {
+        "model_label": "mike_trout",
+        "name_en": "miketrout",
+        "name_ko": "마이크 트라웃",
+        "desc": "완벽한 타격의 정석"
+    },
+    {
+        "model_label": "ohtani",
+        "name_en": "shoheiohtani",
+        "name_ko": "오타니 쇼헤이",
+        "desc": "만화같은 이도류 스윙"
+    },
+    {
+        "model_label": "AustinDean",
+        "name_en": "austindean",
+        "name_ko": "오스틴 딘",
+        "desc": "힘으로 밀어붙이는 타격"
+    },
+    {
+        "model_label": "JulioRodriguez",
+        "name_en": "juliorodriguez",
+        "name_ko": "훌리오 로드리게스",
+        "desc": "젊은 슈퍼스타의 폭발타"
+    },
+    {
+        "model_label": "BobbyWittJr",
+        "name_en": "bobbywittjr",
+        "name_ko": "바비 윗 주니어",
+        "desc": "스피드와 파워의 폭발"
+    },
+    {
+        "model_label": "YasielPuig",
+        "name_en": "yasielpuig",
+        "name_ko": "야시엘 푸이그",
+        "desc": "야생마의 거침없는 한방"
+    },
+    {
+        "model_label": "ChaeEunseong",
+        "name_en": "chaeeunseong",
+        "name_ko": "채은성",
+        "desc": "묵직하게 밀어치는 장타"
+    },
+    {
+        "model_label": "HwangSungBin",
+        "name_en": "hwangseongbin",
+        "name_ko": "황성빈",
+        "desc": "번개같이 튀는 빠른 스윙"
+    },
+    {
+        "model_label": "parkhaemin",
+        "name_en": "parkhaemin",
+        "name_ko": "박해민",
+        "desc": "발처럼 빠른 컨택타"
+    },
+    {
+        "model_label": "SeiyaSuzuki",
+        "name_en": "seiyasuzuki",
+        "name_ko": "스즈키 세이야",
+        "desc": "일본 거포의 정교타"
+    },
+    {
+        "model_label": "ChoiHyungWoo",
+        "name_en": "choihyoungwoo",
+        "name_ko": "최형우",
+        "desc": "베테랑의 묵직한 장타"
+    },
+    {
+        "model_label": "ManyMachado",
+        "name_en": "mannymachado",
+        "name_ko": "매니 마차도",
+        "desc": "우아하게 터지는 강타"
+    },
+    {
+        "model_label": "TreaTurner",
+        "name_en": "treaturner",
+        "name_ko": "트레아 터너",
+        "desc": "번개같은 빠른 스윙"
+    },
+    {
+        "model_label": "LeeJungHoo",
+        "name_en": "leejunghoo",
+        "name_ko": "이정후",
+        "desc": "바람처럼 가르는 천재타"
+    },
+    {
+        "model_label": "BrandonLowe",
+        "name_en": "brandonlowe",
+        "name_ko": "브랜든 로우",
+        "desc": "낮게 깔리는 좌타포"
+    },
+    {
+        "model_label": "freddie_freeman",
+        "name_en": "freddiefreeman",
+        "name_ko": "프레디 프리먼",
+        "desc": "부드러운 장타 장인"
+    },
+    {
+        "model_label": "parkchanho",
+        "name_en": "parkchanho",
+        "name_ko": "박찬호",
+        "desc": "빠른 발의 날카로운 타격"
+    },
+    {
+        "model_label": "hongchangki",
+        "name_en": "hongchangki",
+        "name_ko": "홍창기",
+        "desc": "출루왕의 교과서 타격"
+    },
+    {
+        "model_label": "kimhyesung",
+        "name_en": "kimhyeseong",
+        "name_ko": "김혜성",
+        "desc": "빠르고 날카로운 타격"
+    },
+    {
+        "model_label": "KimDoyeong",
+        "name_en": "kimdoyeong",
+        "name_ko": "김도영",
+        "desc": "번쩍이는 차세대 천재타"
+    },
+    {
+        "model_label": "moonbokyung",
+        "name_en": "moonbogyeong",
+        "name_ko": "문보경",
+        "desc": "LG 거포의 성장 스윙"
+    },
+    {
+        "model_label": "giancarlo_stanton",
+        "name_en": "giancarlostanton",
+        "name_ko": "지안카를로 스탠튼",
+        "desc": "괴력으로 찍는 초대형포"
+    },
+    {
+        "model_label": "VladimirGuerreroJr",
+        "name_en": "vladimirguerrerojr.",
+        "name_ko": "블라디미르 게레로 주니어",
+        "desc": "괴물 혈통의 파워스윙"
+    },
+    {
+        "model_label": "yangeuiji",
+        "name_en": "yangeuiji",
+        "name_ko": "양의지",
+        "desc": "포수왕의 묵직한 한방"
+    },
+    {
+        "model_label": "koojawook",
+        "name_en": "kooJawook",
+        "name_ko": "구자욱",
+        "desc": "라이온즈 프린스 스윙"
+    },
+    {
+        "model_label": "HwangJaegyun",
+        "name_en": "hwangjaegyun",
+        "name_ko": "황재균",
+        "desc": "승부처를 깨는 한방"
+    },
+    {
+        "model_label": "jeonjunwoo",
+        "name_en": "jeonjunwoo",
+        "name_ko": "전준우",
+        "desc": "베테랑의 날카로운 타격"
+    },
+    {
+        "model_label": "mookie_betts",
+        "name_en": "mookiebetts",
+        "name_ko": "무키 베츠",
+        "desc": "리듬타는 천재 스윙"
+    },
+    {
+        "model_label": "GuillermoHeredia",
+        "name_en": "guillermoheredia",
+        "name_ko": "기예르모 에레디아",
+        "desc": "쿠바 감성 리듬 타격"
+    },
+    {
+        "model_label": "parksunghan",
+        "name_en": "parkseonghan",
+        "name_ko": "박성한",
+        "desc": "침착하게 만드는 안타"
+    },
+    {
+        "model_label": "nojinhyeok",
+        "name_en": "nohjinhyuk",
+        "name_ko": "노진혁",
+        "desc": "클러치에 강한 장타"
+    },
+    {
+        "model_label": "JungSooBin",
+        "name_en": "jungsooBin",
+        "name_ko": "정수빈",
+        "desc": "가볍게 밀어치는 컨택"
+    },
+    {
+        "model_label": "GabrielMoreno",
+        "name_en": "gabrielmoreno",
+        "name_ko": "가브리엘 모레노",
+        "desc": "부드럽게 밀어치는 장인"
+    },
+    {
+        "model_label": "PeteCrow-Armstrong",
+        "name_en": "petecrowarmstrong",
+        "name_ko": "피트 크로 암스트롱",
+        "desc": "젊은 바람의 스피드타"
+    },
+    {
+        "model_label": "ohjihwan",
+        "name_en": "ohjihwan",
+        "name_ko": "오지환",
+        "desc": "주장다운 해결사 타격"
+    },
+    {
+        "model_label": "chooshinsoo",
+        "name_en": "chooshinsoo",
+        "name_ko": "추신수",
+        "desc": "메이저 감성 클러치타"
+    },
+    {
+        "model_label": "austin_riley",
+        "name_en": "austinriley",
+        "name_ko": "오스틴 라일리",
+        "desc": "묵직하게 꽂는 거포타"
+    },
+    {
+        "model_label": "corey_seager",
+        "name_en": "coreyseager",
+        "name_ko": "코리 시거",
+        "desc": "우아하게 터지는 장타"
+    },
+    {
+        "model_label": "yordan_alvarez",
+        "name_en": "yordanalvarez",
+        "name_ko": "요르단 알바레즈",
+        "desc": "조용히 터지는 괴력타"
+    },
+    {
+        "model_label": "EricTames",
+        "name_en": "erictames",
+        "name_ko": "에릭 테임즈",
+        "desc": "근육에서 터지는 홈런"
+    },
+    {
+        "model_label": "fernando_tatis_jr",
+        "name_en": "fernandotatis Jr",
+        "name_ko": "페르난도 타티스 주니어",
+        "desc": "춤추듯 터지는 슈퍼스타"
+    },
+    {
+        "model_label": "juan_soto",
+        "name_en": "juansoto",
+        "name_ko": "후안 소토",
+        "desc": "존을 지배하는 천재타"
+    },
+    {
+        "model_label": "sonahseop",
+        "name_en": "sonahseop",
+        "name_ko": "손아섭",
+        "desc": "정교한 컨택의 안타 제조기"
+    },
+    {
+        "model_label": "bryce_harper",
+        "name_en": "bryceharper",
+        "name_ko": "브라이스 하퍼",
+        "desc": "폭발적인 MVP 스윙"
+    },
+    {
+        "model_label": "AhnHyunmin",
+        "name_en": "ahnhyunmin",
+        "name_ko": "안현민",
+        "desc": "젊은 힘이 터지는 스윙"
+    },
+    {
+        "model_label": "julio_rodríguez",
+        "name_en": "juliorodriguez",
+        "name_ko": "훌리오 로드리게스",
+        "desc": "젊은 슈퍼스타의 폭발타"
+    },
+    {
+        "model_label": "aaronjudge",
+        "name_en": "aaronjudge",
+        "name_ko": "에런 저지",
+        "desc": "하늘로 솟는 거포 스윙"
+    },
+    {
+        "model_label": "ronald_acuña_jr",
+        "name_en": "ronaldacunajr",
+        "name_ko": "로날드 아쿠냐 주니어",
+        "desc": "폭풍질주 MVP 스윙"
+    },
+    {
+        "model_label": "kangbaekho",
+        "name_en": "kangbaekho",
+        "name_ko": "강백호",
+        "desc": "천재타자의 호쾌한 한방"
+    },
+    {
+        "model_label": "KimJooChan",
+        "name_en": "kimjoochan",
+        "name_ko": "김주찬",
+        "desc": "노련함 담긴 라인드라이브"
+    },
+    {
+        "model_label": "pete_alonso",
+        "name_en": "petealonso",
+        "name_ko": "피트 알론소",
+        "desc": "메츠의 홈런 공장장"
+    },
+    {
+        "model_label": "AlejandroKirk",
+        "name_en": "alejandrokirk",
+        "name_ko": "알레한드로 커크",
+        "desc": "작지만 묵직한 파워"
+    },
+    {
+        "model_label": "RohSihwan",
+        "name_en": "rohsihwan",
+        "name_ko": "노시환",
+        "desc": "한화 거포의 묵직한 포"
+    },
+    {
+        "model_label": "NicoHoerner",
+        "name_en": "nicohoerner",
+        "name_ko": "니코 호너",
+        "desc": "교과서같은 정교한 타격"
+    },
+    {
+        "model_label": "LeeSeungYeop",
+        "name_en": "leeseungyuop",
+        "name_ko": "이승엽",
+        "desc": "국민타자의 묵직한 한방"
+    }
+]
+
 app = create_app()
 
 with app.app_context():
     """
-    앱 컨텍스트를 활성화하여 데이터베이스 테이블을 생성하고 시드 데이터를 삽입합니다.
+    앱 컨텍스트를 활성화하여 데이터베이스 테이블을 생성하고 
+    투수 및 타자 시드 데이터를 삽입합니다.
     """
     print("데이터베이스 초기화 작업을 시작합니다...")
 
     db.create_all()
     
-    count = 0
-    for data in SEED_DATA:
-        # 데이터베이스에 동일한 model_label을 가진 투수가 이미 존재하는지 검사합니다.
+    # 투수 데이터 적재
+    pitcher_count = 0
+    for data in PITCHER_SEED_DATA:
         exists = Pitcher.query.filter_by(model_label=data["model_label"]).first()
 
-        # 존재하지 않을 경우에만 새로운 투수 객체를 생성하여 세션에 추가합니다.
         if not exists:
             pitcher = Pitcher(
                 model_label=data["model_label"],
@@ -512,8 +870,24 @@ with app.app_context():
                 description=data["desc"]
             )
             db.session.add(pitcher)
-            count += 1
+            pitcher_count += 1
+            
+    # 타자 데이터 적재
+    hitter_count = 0
+    for i, data in enumerate(HITTER_SEED_DATA):
+        exists = Hitter.query.filter_by(model_label=data["model_label"]).first()
+
+        if not exists:
+            hitter = Hitter(
+                model_label=data["model_label"],
+                name_en=data["name_en"],
+                name_ko=data["name_ko"],
+                description=data["desc"]
+            )
+            db.session.add(hitter)
+            hitter_count += 1
         
     # 변경사항을 데이터베이스에 최종 반영합니다.
     db.session.commit()
-    print(f"총 {count}명의 투수 정보가 성공적으로 데이터베이스에 추가되었습니다!")
+    print(f"총 {pitcher_count}명의 투수 정보가 성공적으로 데이터베이스에 추가되었습니다!")
+    print(f"총 {hitter_count}명의 타자 정보가 성공적으로 데이터베이스에 추가되었습니다!")

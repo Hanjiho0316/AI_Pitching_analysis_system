@@ -114,16 +114,7 @@ erDiagram
 ```
 
 # TODOLIST
-- 디자인 향상 (진행중)
-- 메인 화면에 새롭게
-- 새로운 로고 만들기
-- 파일 이름 변경 {
-    edit -> edit_profile,
-    result -> pitch_result,
-    upload -> pitch_upload
-}
-- 타격 폼 분석 페이지 만들기
-- hit_result, hit_upload 필요
-
-# 내일 할 일
-- 배틀 페이지 만들기
+- 타격 결과 화면에 영상 나오게
+- 배틀 페이지 설계...
+- 문서 작업
+- 디자인 향상 (후순위)
