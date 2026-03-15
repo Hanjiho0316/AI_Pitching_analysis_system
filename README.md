@@ -73,6 +73,7 @@ pitching_project/UI/UX
 │       └── upload_pitch.html   # 투구 영상 업로드 화면
 ├── ml_models/                  # 투구 및 타격 모델 저장 디렉토리
 └── data/
+```
 - ranking.html 빨간줄떠도 실행 잘됨
 
 # 데이터베이스 구성
