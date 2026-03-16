@@ -1,7 +1,14 @@
 # Model Description
 
 이 디렉토리는 **AI Pitching Analysis System**에서 사용하는 모델 관련 코드와 구조를 관리하는 폴더입니다.
-투수와 타자의 동작 분석을 위해 모델을 **pitcher / hitter** 두 영역으로 분리하여 구성했습니다.
+투수와 타자의 동작 분석을 위해 모델을 **pitcher**와 **hitter** 두 영역으로 분리하여 구성했습니다.
+
+각 영역은 다음과 같은 기능을 포함합니다.
+
+* 스켈레톤 기반 관절 좌표 추출
+* 데이터 전처리
+* 모델 학습
+* 모델 검증
 
 ---
 
@@ -10,82 +17,78 @@
 ```
 model
 ├ pitcher
-│   ├ pitcher_learning (모델 학습 코드)
-│   ├ pitcher_modelcheck (모델 검증 코드)
-│   ├ LRchanger (좌우 반전)
-│   └ video_analyze_iteration_pitcher (폴더 내 mp4 파일 스켈레톤 기반 좌표 추출 코드)
+│   ├ pitcher_learning
+│   ├ pitcher_modelcheck
+│   ├ LRchanger
+│   └ video_analyze_iteration_pitcher
 │
 └ hitter
-    ├ hitter_learning (모델 학습 코드)
-    ├ hitter_detection (모델 검증 코드)
-    ├ LRchanger (좌우 반전)
-    └ video_extract_hitter (폴더 내 mp4 파일 스켈레톤 기반 좌표 추출 코드)
+    ├ hitter_learning
+    ├ hitter_detection
+    ├ LRchanger
+    └ video_extract_hitter
 ```
 
 ---
 
 # Pitcher Model
 
-`pitcher` 폴더는 투수의 투구 동작을 분석하기 위한 모델 관련 코드가 포함되어 있습니다.
+투수의 투구 동작 분석을 위한 모델 코드가 포함되어 있습니다.
 
-## 주요 기능
+### pitcher_learning
 
-* 투수 객체 탐지
-* 투수 추적 (tracking)
-* 스켈레톤 기반 관절 좌표 추출
-* 투구 동작 자동 감지
-* 투구 클립 생성
+투수 동작 데이터를 이용하여 **투구 분석 모델을 학습하는 코드**입니다.
 
-## 사용 모델
+### pitcher_modelcheck
 
-* YOLO 기반 플레이어 탐지
+학습된 모델의 **성능을 검증하고 테스트하는 코드**입니다.
 
+### LRchanger
 
-## 처리 과정
+좌투수와 우투수 데이터를 통일하기 위해 **스켈레톤 좌표를 좌우 반전하는 전처리 코드**입니다.
 
-```
-Video Input
-   ↓
-Pitcher Detection (YOLO)
-   ↓
-Pitcher Tracking
-   ↓
-Pitch Motion Detection
-   ↓
-Skeleton Data Generation
-```
+### video_analyze_iteration_pitcher
+
+폴더 내 **mp4 영상을 입력받아 스켈레톤 기반 관절 좌표 데이터를 추출하는 코드**입니다.
 
 ---
 
 # Hitter Model
 
-`hitter` 폴더는 타자의 스윙 동작 분석을 위한 모델을 관리합니다.
+타자의 스윙 동작 분석을 위한 모델 코드가 포함되어 있습니다.
 
-## 주요 기능
+### hitter_learning
 
-* 타자 탐지
-* 스윙 동작 분석
-* 스윙 구간 추출
-* 타격 동작 데이터 생성
+타자 스윙 데이터를 이용하여 **타격 동작 분석 모델을 학습하는 코드**입니다.
 
----
+### hitter_detection
 
-# Model Output
+타자의 **스윙 동작을 탐지하거나 모델 성능을 검증하는 코드**입니다.
 
-모델 실행 후 다음과 같은 데이터가 생성됩니다.
+### LRchanger
 
-```
-pitch_clips
-├ pitch_skele_000.mp4
-├ pitch_skele_001.mp4
-├ pitch_data_000.csv
-└ plot_000.png
-```
+좌타자와 우타자의 스윙 데이터를 통일하기 위한 **좌우 반전 전처리 코드**입니다.
 
-설명
+### video_extract_hitter
 
-* **mp4** : 스켈레톤이 표시된 투구 영상
-* **csv** : 관절 좌표 데이터
-* **png** : 관절 움직임 그래프
+폴더 내 **mp4 영상을 분석하여 스켈레톤 기반 관절 좌표 데이터를 추출하는 코드**입니다.
 
 ---
+
+# Model Pipeline
+
+전체 모델 파이프라인은 다음과 같은 순서로 동작합니다.
+
+```
+Video Input
+   ↓
+Player Detection
+   ↓
+Pose Estimation (Skeleton Extraction)
+   ↓
+Data Preprocessing (LRchanger)
+   ↓
+Model Training
+   ↓
+Model Evaluation
+```
