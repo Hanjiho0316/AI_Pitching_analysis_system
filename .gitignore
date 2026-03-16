@@ -28,12 +28,13 @@ UIUX/data/*.json
 UIUX/app/static/uploads/*
 UIUX/app/static/images/*
 !UIUX/app/static/images/pitchers
+!UIUX/app/static/images/hitters
 UIUX/app/static/results/*
 !UIUX/app/static/uploads/.gitkeep
 !UIUX/app/static/results/.gitkeep
 
 # 데이터베이스 관련
-*.db
+UIUX/pitching.db
 
 # OS 및 에디터 관련
 .DS_Store

@@ -1,19 +1,69 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<main class="main-container">
-    <section class="logo-section" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
-        <h2 style="font-size: 1.4rem; color: var(--text-primary); margin-bottom: 1.5rem; font-weight: 400; word-break: keep-all;">나의 투구 폼은 어떤 선수와 가장 비슷할까?</h2>
-        <img src="{{ url_for('static', filename='images/pitchtypes_logo.png') }}" alt="PitchTypes Logo" class="main-logo">
-    </section>
+<style>
+    .main-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 50px;
+        align-items: center;
+        width: 100%;
+        padding: 20px 0 60px 0;
+    }
+    .feature-card {
+        width: 100%;
+        max-width: 800px;
+        background-color: var(--hover-bg);
+        border-radius: 24px;
+        padding: 60px 50px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+    }
+    .feature-title {
+        font-size: 1.6rem;
+        color: var(--text-primary);
+        margin-bottom: 2rem;
+        word-break: keep-all;
+    }
+    .feature-logo {
+        width: 100%;
+        max-width: 450px;
+        height: auto;
+        margin-bottom: 3rem;
+    }
+</style>
 
-    <section class="cta-section">
-        <a href="{{ url_for('main.upload') }}" class="analysis-button">
-            <span style="color: var(--text-primary);">나의 투구 폼 분석하러 가기</span>
-            <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </a>
-    </section>
+<main class="main-container">
+    <div class="main-layout">
+        <section class="feature-card">
+            <h2 class="feature-title">나의 투구 폼은 어떤 선수와 가장 비슷할까?</h2>
+            <img src="{{ url_for('static', filename='images/pitchtypes_logo.png') }}" alt="PitchTypes Logo" class="feature-logo">
+            <a href="{{ url_for('main.upload_pitch') }}" class="analysis-button">
+                <span style="color: var(--text-primary);">나의 투구 폼 분석하러 가기</span>
+                <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+        </section>
+
+        <section class="feature-card">
+            <h2 class="feature-title">나의 타격 폼은 어떤 선수와 가장 비슷할까?</h2>
+            <img src="{{ url_for('static', filename='images/hittypes_logo.png') }}" alt="HitTypes Logo" class="feature-logo">
+            <a href="{{ url_for('main.upload_hit') }}" class="analysis-button">
+                <span style="color: var(--text-primary);">나의 타격 폼 분석하러 가기</span>
+                <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+        </section>
+    </div>
 </main>
 {% endblock %}

@@ -4,11 +4,8 @@
 from app import db
 from datetime import datetime
 
-class Ranking(db.Model):
-    """
-    집계 및 그룹화 쿼리에 최적화된 랭킹 데이터를 저장합니다.
-    """
-    __tablename__ = 'rankings'
+class PitcherRanking(db.Model):
+    __tablename__ = 'pitcher_rankings'
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
@@ -16,5 +13,17 @@ class Ranking(db.Model):
     score = db.Column(db.Float, nullable=False)
     recorded_at = db.Column(db.DateTime, default=datetime.now)
 
-    user = db.relationship('User', backref='rankings')
+    user = db.relationship('User', backref='pitcher_rankings')
     pitcher = db.relationship('Pitcher')
+
+class HitterRanking(db.Model):
+    __tablename__ = 'hitter_rankings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    hitter_id = db.Column(db.Integer, db.ForeignKey('hitters.id'), nullable=True) # 추후 Hitter 모델 연동을 위해 임시로 비워둘 수 있게 설정
+    score = db.Column(db.Float, nullable=False)
+    recorded_at = db.Column(db.DateTime, default=datetime.now)
+
+    user = db.relationship('User', backref='hitter_rankings')
+    hitter = db.relationship('Hitter')

@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .battle-result-container {
+        max-width: 1000px;
+        margin: 40px auto;
+        text-align: center;
+        padding: 0 20px;
+    }
+
+    .match-status {
+        font-size: 4.5rem;
+        font-weight: 900;
+        margin-bottom: 50px;
+        letter-spacing: 5px;
+        text-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        animation: scaleUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+    
+    .status-win { color: #1976d2; }
+    .status-lose { color: #d32f2f; }
+    .status-draw { color: #757575; }
+
+    .vs-board {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 30px;
+        position: relative;
+    }
+
+    .vs-badge {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--text-secondary);
+        font-style: italic;
+        background: var(--bg-color);
+        padding: 20px;
+        border-radius: 50%;
+        box-shadow: inset 0 4px 10px rgba(0,0,0,0.05);
+        z-index: 10;
+    }
+
+    .player-card {
+        flex: 1;
+        background-color: var(--card-bg);
+        border-radius: 30px;
+        padding: 40px 20px;
+        border: 2px solid var(--border-color);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition: transform 0.3s;
+    }
+
+    .card-winner { border-color: #FFD700; box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2); transform: translateY(-10px); }
+    .card-loser { opacity: 0.8; filter: grayscale(30%); }
+
+    .avatar-wrap { position: relative; margin-bottom: 25px; }
+    
+    .main-avatar {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid var(--card-bg);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .sub-avatar {
+        position: absolute;
+        bottom: 0;
+        right: -10px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--card-bg);
+    }
+
+    .user-name { font-size: 1.5rem; color: var(--text-primary); font-weight: 700; margin-bottom: 5px; }
+    .matched-name { font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 20px; }
+    
+    .score-box {
+        background-color: var(--hover-bg);
+        padding: 15px 40px;
+        border-radius: 50px;
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+
+    .btn-group {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 60px;
+    }
+    
+    .btn-action {
+        padding: 16px 35px;
+        border-radius: 50px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: 0.3s;
+    }
+    
+    .btn-retry { background-color: var(--button-bg); color: var(--button-text); }
+    .btn-retry:hover { opacity: 0.9; transform: translateY(-2px); }
+    
+    .btn-home { background-color: var(--card-bg); color: var(--text-primary); border: 2px solid var(--border-color); }
+    .btn-home:hover { background-color: var(--hover-bg); }
+
+    @keyframes scaleUp {
+        0% { transform: scale(0.5); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    @media (max-width: 768px) {
+        .vs-board { flex-direction: column; gap: 20px; }
+        .vs-badge { margin: 10px 0; padding: 10px; font-size: 1.8rem; }
+        .player-card { width: 100%; padding: 30px 20px; }
+        .match-status { font-size: 3.5rem; margin-bottom: 30px; }
+    }
+</style>
+
+<div class="battle-result-container">
+    <div class="match-status status-{{ match_result|lower }}">{{ match_result }}!</div>
+
+    <div class="vs-board">
+        <div class="player-card {% if match_result == 'LOSE' %}card-winner{% else %}card-loser{% endif %}">
+            <h3 style="color: var(--text-secondary); margin-top: 0; margin-bottom: 20px; font-size: 1rem;">방어자 기록</h3>
+            <div class="avatar-wrap">
+                <img src="{{ url_for('static', filename='images/' ~ target_player_img) }}" class="main-avatar" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+                <img src="{{ url_for('static', filename='uploads/profiles/' ~ target.user.profile_image) }}" class="sub-avatar" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+            </div>
+            <div class="user-name">{{ target.user.nickname }}</div>
+            <div class="matched-name">{{ target_player_name }}</div>
+            <div class="score-box">{{ target.similarity }}%</div>
+        </div>
+
+        <div class="vs-badge">VS</div>
+
+        <div class="player-card {% if match_result == 'WIN' %}card-winner{% else %}card-loser{% endif %}">
+            <h3 style="color: var(--text-secondary); margin-top: 0; margin-bottom: 20px; font-size: 1rem;">나의 도전 기록</h3>
+            <div class="avatar-wrap">
+                <img src="{{ url_for('static', filename='images/' ~ my_player_img) }}" class="main-avatar" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+                <img src="{{ url_for('static', filename='uploads/profiles/' ~ current_user.profile_image) }}" class="sub-avatar" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+            </div>
+            <div class="user-name">{{ current_user.nickname }}</div>
+            <div class="matched-name">{{ my_player_name }}</div>
+            <div class="score-box" style="color: {% if match_result == 'WIN' %}#1976d2{% else %}var(--text-primary){% endif %};">{{ my_score }}%</div>
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <a href="/battle" class="btn-action btn-retry">다른 유저에게 도전하기</a>
+        <a href="/" class="btn-action btn-home">메인으로 가기</a>
+    </div>
+</div>
+{% endblock %}

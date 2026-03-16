@@ -109,7 +109,7 @@ def edit_profile():
         
         return redirect(url_for('main.mypage', nickname=current_user.nickname))
         
-    return render_template('edit.html')
+    return render_template('edit_profile.html')
 
 
 @auth_bp.route('/delete-account', methods=['POST'])

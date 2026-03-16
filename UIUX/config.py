@@ -18,9 +18,12 @@ class Config:
     # 업로드 가능한 최대 파일 용량 제한 (32MB)
     MAX_CONTENT_LENGTH = 32 * 1024 * 1024
 
-    # 머신러닝 모델 파일 경로 설정
-    ML_MODEL_PATH = os.path.join(BASE_DIR, 'ml_models', 'best_model_fold.h5')
-    LABEL_ENCODER_PATH = os.path.join(BASE_DIR, 'ml_models', 'label_encoder.pkl')
-    YOLO_MODEL_PATH = 'yolov8n.pt'
-
+    # 투구 폼 분석용 머신러닝 모델 및 레이블 파일 경로
+    PITCH_ML_MODEL_PATH = os.path.join(BASE_DIR, 'ml_models', 'pitch_model.h5')
+    PITCH_LABEL_ENCODER_PATH = os.path.join(BASE_DIR, 'ml_models', 'pitch_label_encoder.pkl')
     
+    # 타격 폼 분석용 머신러닝 모델 및 레이블 파일 경로
+    HIT_ML_MODEL_PATH = os.path.join(BASE_DIR, 'ml_models', 'hit_model.h5')
+    HIT_LABEL_ENCODER_PATH = os.path.join(BASE_DIR, 'ml_models', 'hit_label_encoder.pkl')
+
+    YOLO_MODEL_PATH = 'yolov8n.pt'

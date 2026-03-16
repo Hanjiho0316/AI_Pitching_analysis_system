@@ -2,174 +2,405 @@
 
 {% block content %}
 <style>
-    .ranking-wrapper {
+    .ranking-tabs {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 30px;
         width: 100%;
-        max-width: 1200px;
-        margin: 40px auto;
+    }
+    .tab-btn {
+        padding: 12px 35px;
+        font-size: 1.1rem;
+        font-weight: 400;
+        border-radius: 30px;
+        background-color: var(--card-bg);
+        color: var(--text-secondary);
+        border: 2px solid var(--border-color);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    }
+    .tab-btn.active {
+        background-color: var(--text-primary);
+        color: var(--bg-color);
+        border-color: var(--text-primary);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .tab-btn:hover:not(.active) {
         background-color: var(--hover-bg);
-        border-radius: 24px;
-        padding: 120px 40px 50px 40px; 
-        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        border-color: var(--text-secondary);
+    }
+    .empty-ranking {
+        text-align: center;
+        width: 100%;
+        color: var(--text-secondary);
+        padding: 60px 20px;
+        background: var(--card-bg);
+        border-radius: 20px;
+        border: 1px dashed var(--border-color);
+        font-size: 1.1rem;
+    }
+    .ranking-board {
+        background-color: var(--hover-bg);
+        width: 100%;
+        max-width: 1000px;
+        padding: 60px 40px;
+        border-radius: 30px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        border: 1px solid var(--border-color);
         display: flex;
         flex-direction: column;
         align-items: center;
     }
-
-    .rank-1 { order: 2; z-index: 3; }
-
-    .ranking-header { margin-bottom: 100px; }
-
-    .list-text-info {
+    
+    /* 시상대 상단 여백 추가 */
+    .podium-container {
         display: flex;
-        flex-direction: column;
-        gap: 4px;
-        margin-left: 15px;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 30px;
+        margin-top: 30px; 
+        margin-bottom: 80px;
+        width: 100%;
     }
 
-    .rank-1 .pitcher-avatar, .rank-1 .user-avatar { border-color: #FFD700 !important; }
-    .rank-2 .pitcher-avatar, .rank-2 .user-avatar { border-color: #C0C0C0 !important; }
-    .rank-3 .pitcher-avatar, .rank-3 .user-avatar { border-color: #CD7F32 !important; }
-    </style>
+    .podium-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        flex: 1;
+        max-width: 200px;
+    }
+
+    .rank-1 { order: 2; transform: translateY(-30px); z-index: 3; }
+    .rank-2 { order: 1; z-index: 2; }
+    .rank-3 { order: 3; z-index: 1; }
+
+    .avatar-group {
+        position: relative;
+        margin-bottom: 20px;
+        transition: transform 0.3s ease;
+        display: flex;
+        justify-content: center;
+    }
+    .podium-item:hover .avatar-group {
+        transform: translateY(-10px);
+    }
+
+    .pitcher-avatar {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid var(--card-bg);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    }
+
+    .rank-1 .pitcher-avatar { width: 140px; height: 140px; border-color: #FFD700; }
+    .rank-2 .pitcher-avatar { border-color: #C0C0C0; }
+    .rank-3 .pitcher-avatar { border-color: #CD7F32; }
+
+    .user-avatar {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--card-bg);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    /* 사용자 프로필 테두리 색상 동기화 */
+    .rank-1 .user-avatar { width: 60px; height: 60px; bottom: 5px; right: -10px; border-color: #FFD700; }
+    .rank-2 .user-avatar { border-color: #C0C0C0; }
+    .rank-3 .user-avatar { border-color: #CD7F32; }
+
+    /* 왕관 간격 조정 */
+    .crown {
+        width: 35px;
+        height: 35px;
+        position: absolute;
+        top: -35px; 
+        z-index: 4;
+        animation: float 3s ease-in-out infinite;
+    }
+    .rank-1 .crown { width: 50px; height: 50px; top: -45px; } 
+
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-8px); }
+        100% { transform: translateY(0px); }
+    }
+
+    .gold-crown { color: #FFD700; filter: drop-shadow(0 4px 6px rgba(255, 215, 0, 0.4)); }
+    .silver-crown { color: #C0C0C0; filter: drop-shadow(0 4px 6px rgba(192, 192, 192, 0.4)); }
+    .bronze-crown { color: #CD7F32; filter: drop-shadow(0 4px 6px rgba(205, 127, 50, 0.4)); }
+
+    .ranking-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: var(--text-primary);
+        margin-bottom: 15px;
+        width: 100%;
+    }
+
+    .rank-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 2px; }
+    .pitcher-name { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px; }
+    .rank-score { font-size: 1.3rem; font-weight: 700; color: var(--text-primary); }
+
+    .podium-base {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: var(--card-bg);
+        font-size: 2rem;
+        font-weight: 800;
+        border-radius: 12px 12px 0 0;
+        box-shadow: inset 0 4px 10px rgba(255,255,255,0.2), 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    .base-1 { height: 60px; background: linear-gradient(135deg, #FFDF00, #D4AF37); }
+    .base-2 { height: 40px; background: linear-gradient(135deg, #E0E0E0, #A9A9A9); }
+    .base-3 { height: 30px; background: linear-gradient(135deg, #E0A96D, #CD7F32); }
+
+    .ranking-list {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .list-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 30px;
+        border-radius: 16px;
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .list-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+    }
+
+    /* 4위 이하 새로운 레이아웃 CSS */
+    .list-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        min-width: 80px;
+    }
+
+    .list-user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--border-color);
+    }
+
+    .list-player-thumb {
+        width: 65px; 
+        height: 65px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--border-color);
+    }
+
+    .list-name-text { font-size: 0.95rem; color: var(--text-primary); font-weight: 500; }
+    .list-sub-text { font-size: 0.85rem; color: var(--text-secondary); }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid var(--border-color);
+        border-top: 4px solid var(--text-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 30px auto;
+    }
+
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .fade-in { animation: fadeIn 0.5s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .loading-hidden { display: none !important; }
+</style>
 
 <main class="main-container ranking-page">
-    <div class="ranking-header">
+    <div class="ranking-header" style="margin-bottom: 30px;">
         <h2 class="ranking-title">명예의 전당</h2>
-        <p class="ranking-subtitle">최고의 싱크로율을 자랑하는 투수들을 만나보세요</p>
+        <p class="ranking-subtitle">최고의 싱크로율을 자랑하는 폼의 달인들을 만나보세요</p>
     </div>
 
-    <div class="ranking-wrapper">
-        <div class="podium-container">
-            {% if rankings|length >= 2 %}
-            <div class="podium-item rank-2">
-                <div class="crown silver-crown">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
-                </div>
-                <div class="avatar-group">
-                    <img src="{{ url_for('static', filename='images/pitchers/' ~ rankings[1].pitcher.name_en ~ '.jpg') }}" class="pitcher-avatar" alt="Pitcher" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
-                    <img src="{{ url_for('static', filename='uploads/profiles/' ~ rankings[1].user.profile_image) }}" class="user-avatar" alt="User" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
-                </div>
-                <div class="ranking-info">
-                    <span class="rank-name">{{ rankings[1].user.nickname }}</span>
-                    <span class="pitcher-name">{{ rankings[1].pitcher.name_ko }}</span>
-                    <span class="rank-score">{{ rankings[1].score }}%</span>
-                </div>
-                <div class="podium-base base-2">2</div>
-            </div>
-            {% endif %}
+    <div class="ranking-tabs">
+        <button class="tab-btn active" data-type="pitch" onclick="switchTab('pitch')">투수 랭킹</button>
+        <button class="tab-btn" data-type="hit" onclick="switchTab('hit')">타자 랭킹</button>
+    </div>
 
-            {% if rankings|length >= 1 %}
-            <div class="podium-item rank-1">
-                <div class="crown gold-crown">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
-                </div>
-                <div class="avatar-group">
-                    <img src="{{ url_for('static', filename='images/pitchers/' ~ rankings[0].pitcher.name_en ~ '.jpg') }}" class="pitcher-avatar" alt="Pitcher" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
-                    <img src="{{ url_for('static', filename='uploads/profiles/' ~ rankings[0].user.profile_image) }}" class="user-avatar" alt="User" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
-                </div>
-                <div class="ranking-info">
-                    <span class="rank-name">{{ rankings[0].user.nickname }}</span>
-                    <span class="pitcher-name">{{ rankings[0].pitcher.name_ko }}</span>
-                    <span class="rank-score">{{ rankings[0].score }}%</span>
-                </div>
-                <div class="podium-base base-1">1</div>
-            </div>
-            {% endif %}
+    <div class="ranking-board">
+        <div class="podium-container" id="podium-container"></div>
+        <div class="ranking-list" id="ranking-list"></div>
+    </div>
 
-            {% if rankings|length >= 3 %}
-            <div class="podium-item rank-3">
-                <div class="crown bronze-crown">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
-                </div>
-                <div class="avatar-group">
-                    <img src="{{ url_for('static', filename='images/pitchers/' ~ rankings[2].pitcher.name_en ~ '.jpg') }}" class="pitcher-avatar" alt="Pitcher" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
-                    <img src="{{ url_for('static', filename='uploads/profiles/' ~ rankings[2].user.profile_image) }}" class="user-avatar" alt="User" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
-                </div>
-                <div class="ranking-info">
-                    <span class="rank-name">{{ rankings[2].user.nickname }}</span>
-                    <span class="pitcher-name">{{ rankings[2].pitcher.name_ko }}</span>
-                    <span class="rank-score">{{ rankings[2].score }}%</span>
-                </div>
-                <div class="podium-base base-3">3</div>
-            </div>
-            {% endif %}
-        </div>
-
-        <div class="ranking-list" id="ranking-list">
-            {% for i in range(3, rankings|length) %}
-            <div class="list-item" style="background-image: linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 100%), url('{{ url_for('static', filename='images/pitchers/' ~ rankings[i].pitcher.name_en ~ '.jpg') }}');">
-                <div class="list-left">
-                    <span class="list-rank-num">{{ i + 1 }}</span>
-                    <img src="{{ url_for('static', filename='uploads/profiles/' ~ rankings[i].user.profile_image) }}" class="list-user-avatar" alt="User" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
-                    <div class="list-text-info">
-                        <span class="list-nickname">{{ rankings[i].user.nickname }}</span>
-                        <span class="list-pitcher">{{ rankings[i].pitcher.name_ko }}</span>
-                    </div>
-                </div> <div class="list-right">
-                    <span class="list-score">{{ rankings[i].score }}%</span>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div> <div id="loading-indicator" class="loading-hidden">
+    <div id="loading-indicator" class="loading-hidden">
         <div class="spinner"></div>
     </div>
 </main>
 
 <script>
-    /* 자바스크립트는 기존과 동일하게 유지하되, 무한 스크롤 생성 부분 클래스명만 맞춤 확인됨 */
-    let currentOffset = 10;
+    let currentType = 'pitch';
+    let currentOffset = 0;
     let isFetching = false;
-    let hasMoreData = {{ 'true' if rankings|length >= 10 else 'false' }};
+    let hasMoreData = true;
 
-    window.addEventListener('scroll', () => {
-        if (isFetching || !hasMoreData) return;
-        const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
-        if (scrollTop + clientHeight >= scrollHeight - 50) {
-            fetchMoreRankings();
-        }
+    document.addEventListener('DOMContentLoaded', () => {
+        loadRankings('pitch', false);
     });
 
-    async function fetchMoreRankings() {
+    function switchTab(type) {
+        if (currentType === type || isFetching) return;
+        currentType = type;
+        
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.type === type);
+        });
+        
+        loadRankings(type, false);
+    }
+
+    async function loadRankings(type, isLoadMore = false) {
+        if (isFetching) return;
+        if (isLoadMore && !hasMoreData) return;
+        
         isFetching = true;
         document.getElementById('loading-indicator').classList.remove('loading-hidden');
+        
+        if (!isLoadMore) {
+            currentOffset = 0;
+            hasMoreData = true;
+            document.getElementById('podium-container').innerHTML = '';
+            document.getElementById('ranking-list').innerHTML = '';
+        }
 
         try {
-            const response = await fetch(`/api/more-rankings?offset=${currentOffset}&limit=10`);
+            const response = await fetch(`/api/rankings?type=${type}&offset=${currentOffset}&limit=10`);
             const data = await response.json();
 
             if (data.length === 0) {
                 hasMoreData = false;
+                if (!isLoadMore) {
+                    document.getElementById('podium-container').innerHTML = '<div class="empty-ranking">아직 랭킹 데이터가 없습니다.<br>첫 번째 랭커에 도전해 보세요!</div>';
+                }
             } else {
-                const listContainer = document.getElementById('ranking-list');
-                data.forEach((rank, index) => {
-                    const actualRank = currentOffset + index + 1;
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'list-item fade-in';
-                    itemDiv.style.backgroundImage = `linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 100%), url('/static/images/pitchers/${rank.pitcher_image}')`;
-
-                    itemDiv.innerHTML = `
-                        <div class="list-left">
-                            <span class="list-rank-num">${actualRank}</span>
-                            <img src="/static/uploads/profiles/${rank.profile_image}" class="list-user-avatar" alt="User" onerror="this.src='/static/images/default_logo.png'">
-                            <div class="list-text-info">
-                                <span class="list-nickname">${rank.nickname}</span>
-                                <span class="list-pitcher">${rank.pitcher_name}</span>
-                            </div>
-                        </div>
-                        <div class="list-right">
-                            <span class="list-score">${rank.score}%</span>
-                        </div>
-                    `;
-                    listContainer.appendChild(itemDiv);
-                });
+                let listData = data;
+                
+                if (!isLoadMore) {
+                    const top3 = data.slice(0, 3);
+                    renderPodium(top3, type);
+                    listData = data.slice(3);
+                }
+                
+                if (listData.length > 0) {
+                    renderList(listData, type, currentOffset + (isLoadMore ? 0 : 3));
+                }
+                
                 currentOffset += data.length;
+                if (data.length < 10) hasMoreData = false;
             }
         } catch (error) {
-            console.error('데이터 로드 실패', error);
+            console.error('랭킹 데이터 로드 실패', error);
         } finally {
             isFetching = false;
             document.getElementById('loading-indicator').classList.add('loading-hidden');
         }
     }
+
+    function renderPodium(top3, type) {
+        const container = document.getElementById('podium-container');
+        const folder = type === 'pitch' ? 'pitchers' : 'hitters';
+        
+        if (top3[1]) container.appendChild(createPodiumItem(top3[1], 2, folder));
+        if (top3[0]) container.appendChild(createPodiumItem(top3[0], 1, folder));
+        if (top3[2]) container.appendChild(createPodiumItem(top3[2], 3, folder));
+    }
+
+    function createPodiumItem(rankData, rankNum, folder) {
+        const div = document.createElement('div');
+        div.className = `podium-item rank-${rankNum} fade-in`;
+        
+        const crowns = {
+            1: { class: 'gold-crown', base: 'base-1' },
+            2: { class: 'silver-crown', base: 'base-2' },
+            3: { class: 'bronze-crown', base: 'base-3' }
+        };
+
+        div.innerHTML = `
+            <div class="crown ${crowns[rankNum].class}">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
+            </div>
+            <div class="avatar-group">
+                <img src="/static/images/${folder}/${rankData.player_image}" class="pitcher-avatar" alt="Player" onerror="this.src='/static/images/default_logo.png'">
+                <img src="/static/uploads/profiles/${rankData.profile_image}" class="user-avatar" alt="User" onerror="this.src='/static/images/default_logo.png'">
+            </div>
+            <div class="ranking-info">
+                <span class="rank-name">${rankData.nickname}</span>
+                <span class="pitcher-name">${rankData.player_name}</span>
+                <span class="rank-score">${rankData.score}%</span>
+            </div>
+            <div class="podium-base ${crowns[rankNum].base}">${rankNum}</div>
+        `;
+        return div;
+    }
+
+    function renderList(listData, type, startRank) {
+        const container = document.getElementById('ranking-list');
+        const folder = type === 'pitch' ? 'pitchers' : 'hitters';
+        
+        listData.forEach((rankData, index) => {
+            const actualRank = startRank + index + 1;
+            const div = document.createElement('div');
+            div.className = 'list-item fade-in';
+            
+            div.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 30px;">
+                    <span style="font-size: 1.4rem; font-weight: 700; width: 30px; color: var(--text-primary); text-align: center;">${actualRank}</span>
+                    
+                    <div class="list-col">
+                        <img src="/static/uploads/profiles/${rankData.profile_image}" class="list-user-avatar" alt="User" onerror="this.src='/static/images/default_logo.png'">
+                        <span class="list-name-text">${rankData.nickname}</span>
+                    </div>
+                    
+                    <div class="list-col">
+                        <img src="/static/images/${folder}/${rankData.player_image}" class="list-player-thumb" alt="Player" onerror="this.src='/static/images/default_logo.png'">
+                        <span class="list-sub-text">${rankData.player_name}</span>
+                    </div>
+                </div>
+                
+                <div>
+                    <span style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">${rankData.score}%</span>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    window.addEventListener('scroll', () => {
+        if (isFetching || !hasMoreData) return;
+        const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+        if (scrollTop + clientHeight >= scrollHeight - 50) {
+            loadRankings(currentType, true);
+        }
+    });
 </script>
 {% endblock %}

@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<style>
+    .result-container { max-width: 1200px; margin: 0 auto; padding: 40px; }
+    
+    .header-card { background: var(--hover-bg); padding: 50px 40px; border-radius: 24px; text-align: center; margin-bottom: 50px; border: 1px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+    .match-title { font-size: 2rem; color: var(--text-primary); margin-bottom: 15px; letter-spacing: -0.02em; }
+    .highlight-text { color: #1976d2; }
+    .sub-title { font-size: 1.1rem; color: var(--text-secondary); }
+    
+    .video-section { display: flex; gap: 25px; margin-bottom: 50px; flex-wrap: wrap; }
+    .video-card { background: var(--card-bg); padding: 25px; border-radius: 24px; flex: 1; border: 1px solid var(--border-color); min-width: 300px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); display: flex; flex-direction: column; }
+    .video-card h3 { color: var(--text-primary); text-align: center; margin-top: 0; margin-bottom: 20px; font-size: 1.2rem; }
+    .video-wrapper { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 16px; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    video { width: 100%; height: 100%; object-fit: contain; }
+    
+    .share-section { text-align: center; padding: 60px 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); margin-bottom: 50px; }
+    .share-section h2 { color: var(--text-primary); margin-bottom: 30px; font-size: 1.5rem; }
+    
+    #pitch-card { background: linear-gradient(145deg, #0a192f, #112240); width: 400px; padding: 0; border-radius: 25px; margin: 0 auto 30px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); border: 4px solid #ffd700; overflow: hidden; text-align: left; color: white; }
+    .card-visual { position: relative; width: 100%; height: 300px; background: #000; overflow: hidden; }
+    .card-player-img { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+    .card-score-overlay { position: absolute; top: 20px; right: 20px; background: rgba(25, 118, 210, 0.9); padding: 10px 20px; border-radius: 15px; font-size: 1.5rem; border: 2px solid #ffd700; color: white; }
+    
+    .card-body { padding: 25px; }
+    .card-title { font-size: 0.8rem; color: #ffd700; letter-spacing: 2px; margin-bottom: 5px; }
+    .card-player-name { font-size: 2rem; margin-bottom: 15px; }
+    .card-desc { background: rgba(255,255,255,0.07); padding: 15px; border-radius: 12px; border-left: 5px solid #ffd700; font-size: 1.05rem; line-height: 1.5; }
+    
+    .btn-group { display: flex; justify-content: center; gap: 15px; margin-top: 30px; }
+    .btn-action { padding: 15px 30px; border-radius: 50px; border: none; cursor: pointer; transition: 0.3s; text-decoration: none; display: inline-block; font-size: 1.05rem; }
+    .btn-save { background: #1976d2; color: white; }
+    .btn-home { background: var(--button-bg); color: var(--button-text); }
+    .btn-action:hover { opacity: 0.9; transform: translateY(-2px); }
+    
+    .ranking-card { background: var(--card-bg); padding: 35px; border-radius: 24px; border: 1px solid var(--border-color); color: var(--text-primary); box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
+    th { color: var(--text-secondary); font-size: 0.95rem; }
+</style>
+
+<div class="result-container">
+    <div class="header-card">
+        <h1 class="match-title">나의 투구 폼은 <span class="highlight-text">{{ pitcher.name_ko }}</span> 선수와 <span class="highlight-text">{{ result.similarity }}%</span> 일치합니다!</h1>
+        <p class="sub-title">AI가 분석한 투구 동작 상세 비교 결과를 확인해 보세요.</p>
+    </div>
+
+    <div class="video-section">
+        <div class="video-card">
+            <h3>나의 투구 모습</h3>
+            <div class="video-wrapper">
+                <video autoplay loop muted playsinline>
+                    <source src="{{ url_for('static', filename='uploads/' ~ filename) }}" type="video/mp4">
+                    브라우저가 동영상을 지원하지 않습니다.
+                </video>
+            </div>
+        </div>
+        <div class="video-card">
+            <h3>{{ pitcher.name_ko }} 선수 투구 모습</h3>
+            <div class="video-wrapper">
+                <video autoplay loop muted playsinline>
+                    <source src="{{ url_for('static', filename='videos/pitchers/' + pitcher.name_en + '.mp4') }}" type="video/mp4">
+                </video>
+            </div>
+        </div>
+    </div>
+
+    <div class="share-section">
+        <h2>분석 결과 카드</h2>
+        <div id="pitch-card">
+            <div class="card-visual">
+                <img src="{{ url_for('static', filename='images/pitchers/' + pitcher.name_en + '.jpg') }}" class="card-player-img" alt="선수 이미지" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+                <div class="card-score-overlay">{{ result.similarity }}%</div>
+            </div>
+            
+            <div class="card-body">
+                <div class="card-title">PITCHTYPES AI REPORT</div>
+                <div class="card-player-name">{{ pitcher.name_ko }}</div>
+                <div class="card-desc">"{{ pitcher.description }}"</div>
+                <div style="margin-top:20px; font-size:0.7rem; opacity:0.5; text-align:right;">PitchTypes v1.0</div>
+            </div>
+        </div>
+        <div class="btn-group">
+            <button onclick="saveCard()" class="btn-action btn-save">카드 저장하기</button>
+            <a href="/" class="btn-action btn-home">처음으로</a>
+        </div>
+    </div>
+
+    <div class="ranking-card">
+        <h3 style="margin-top: 0; font-size: 1.3rem;">최근 투구 분석 기록</h3>
+        <table>
+            <tr><th>시간</th><th>사용자</th><th>선수</th><th>유사도</th></tr>
+            {% for analysis in recent_analyses %}
+            <tr>
+                <td>{{ analysis.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>{{ analysis.user.nickname }}</td>
+                <td>{{ analysis.pitcher.name_ko if analysis.pitcher else '알 수 없음' }}</td>
+                <td>{{ analysis.similarity }}%</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+
+<script>
+    function saveCard() {
+        html2canvas(document.getElementById("pitch-card"), {backgroundColor: null}).then(canvas => {
+            let link = document.createElement('a');
+            link.download = 'pitchtypes_result.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+    }
+</script>
+{% endblock %}

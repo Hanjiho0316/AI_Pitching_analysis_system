@@ -26,10 +26,10 @@
             <button id="close-sidebar" class="close-btn" style="color: var(--text-primary);">&times;</button>
         </div>
         <nav class="sidebar-nav">
-            <a href="{{ url_for('main.upload') }}" class="sidebar-link">투구 폼 분석</a>
-            <a href="#" class="sidebar-link">타격 폼 분석</a>
+            <a href="{{ url_for('main.upload_pitch') }}" class="sidebar-link">투구 폼 분석</a>
+            <a href="{{ url_for('main.upload_hit') }}" class="sidebar-link">타격 폼 분석</a>
             <a href="{{ url_for('main.ranking') }}" class="sidebar-link">랭킹 화면</a>
-            <a href="#" class="sidebar-link">점수 대결</a>
+            <a href="{{ url_for('main.battle') }}" class="sidebar-link">고스트 배틀</a>
         </nav>
         <div class="sidebar-footer">
             {% if current_user.is_authenticated %}

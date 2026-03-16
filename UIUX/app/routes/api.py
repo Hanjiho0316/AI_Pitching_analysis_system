@@ -9,7 +9,7 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_login import current_user
 from werkzeug.utils import secure_filename
 from app.models.user import User
-from app.models.ranking import Ranking
+from app.models.ranking import PitcherRanking, HitterRanking
 from app.services.ml_service import start_analysis_task, get_task_status
 
 api_bp = Blueprint('api', __name__)
@@ -65,29 +65,25 @@ def check_nickname():
 def upload_async():
     """
     사용자가 업로드한 영상을 서버에 저장하고, 백그라운드 분석 작업을 시작합니다.
-    로그인한 사용자는 닉네임 폴더에, 비로그인 사용자는 guest 폴더에 영상을 저장합니다.
-    
-    Returns:
-        Response: 생성된 작업 ID(task_id)와 상태를 포함한 JSON 객체
+    분석 타입(pitch/hit)에 따라 적절한 모델을 선택합니다.
     """
-    if 'pitching_video' not in request.files:
-        return jsonify({'error': 'No file part'}), 400
-        
-    file = request.files['pitching_video']
-    if file.filename == '':
+    # 프론트엔드에서 전달받은 분석 타입 (기본값: pitch)
+    analysis_type = request.form.get('analysis_type', 'pitch')
+    
+    # 투구 업로드와 타격 업로드의 파일 폼 이름 호환성 처리
+    file = request.files.get('video_file') or request.files.get('pitching_video')
+    
+    if not file or file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
         
     if file:
-        # 원본 파일명 추출
         original_filename = secure_filename(file.filename)
         ext = os.path.splitext(original_filename)[1]
         
-        # 고유한 파일명 생성 (예: 20260311_153022_a1b2c3d4.mp4)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         unique_id = uuid.uuid4().hex[:8]
         unique_filename = f"{timestamp}_{unique_id}{ext}"
         
-        # 사용자별 폴더 경로 설정 (비로그인 사용자는 guest 폴더로 분류)
         if current_user.is_authenticated:
             user_folder = str(current_user.id)
         else:
@@ -96,19 +92,20 @@ def upload_async():
         upload_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], user_folder)
         os.makedirs(upload_folder, exist_ok=True)
         
-        # 최종 파일 경로 조합 및 저장
         filepath = os.path.join(upload_folder, unique_filename)
         file.save(filepath)
         
-        # current_app.config에서 모델 경로들을 가져옵니다.
-        ml_model_path = current_app.config.get('ML_MODEL_PATH')
-        encoder_path = current_app.config.get('LABEL_ENCODER_PATH')
+        # 분석 종류에 따른 모델 설정 분기
+        if analysis_type == 'hit':
+            ml_model_path = current_app.config.get('HIT_ML_MODEL_PATH')
+            encoder_path = current_app.config.get('HIT_LABEL_ENCODER_PATH')
+        else:
+            ml_model_path = current_app.config.get('PITCH_ML_MODEL_PATH')
+            encoder_path = current_app.config.get('PITCH_LABEL_ENCODER_PATH')
+            
         yolo_path = current_app.config.get('YOLO_MODEL_PATH')
         
-        # 비동기 스레드에서 DB에 접근하기 위해 현재 앱 인스턴스를 가져옵니다.
         app_instance = current_app._get_current_object()
-        
-        # 비로그인 사용자(guest)의 경우 DB 저장을 생략하거나 별도 처리하기 위해 분기합니다.
         user_id = current_user.id if current_user.is_authenticated else None
         
         task_id = start_analysis_task(
@@ -117,7 +114,8 @@ def upload_async():
             encoder_path, 
             yolo_path, 
             app_instance, 
-            user_id
+            user_id,
+            analysis_type
         )
         
         return jsonify({'task_id': task_id, 'status': 'started'})
@@ -139,24 +137,87 @@ def check_status(task_id):
     return jsonify(task_info)
 
 
-@api_bp.route('/more-rankings', methods=['GET'])
-def more_rankings():
-    offset = request.args.get('offset', 10, type=int)
+@api_bp.route('/rankings', methods=['GET'])
+def get_rankings():
+    offset = request.args.get('offset', 0, type=int)
     limit = request.args.get('limit', 10, type=int)
-    
-    rankings = Ranking.query.order_by(Ranking.score.desc()).offset(offset).limit(limit).all()
+    ranking_type = request.args.get('type', 'pitch')
     
     result = []
-    for rank in rankings:
-        # 복잡한 replace 대신 깔끔하게 저장된 name_en 속성을 활용합니다.
-        safe_image_name = rank.pitcher.name_en + '.jpg'
+    
+    if ranking_type == 'hit':
+        from app.models.ranking import HitterRanking
+        rankings = HitterRanking.query.order_by(HitterRanking.score.desc(), HitterRanking.recorded_at.desc()).offset(offset).limit(limit).all()
+        for rank in rankings:
+            safe_image_name = rank.hitter.name_en + '.jpg' if rank.hitter else 'default_logo.png'
+            player_name = rank.hitter.name_ko if rank.hitter else '알 수 없음'
+            result.append({
+                'nickname': rank.user.nickname,
+                'profile_image': rank.user.profile_image,
+                'player_name': player_name,
+                'player_image': safe_image_name,
+                'score': rank.score,
+                'type': 'hit'
+            })
+    else:
+        from app.models.ranking import PitcherRanking
+        rankings = PitcherRanking.query.order_by(PitcherRanking.score.desc(), PitcherRanking.recorded_at.desc()).offset(offset).limit(limit).all()
+        for rank in rankings:
+            safe_image_name = rank.pitcher.name_en + '.jpg' if rank.pitcher else 'default_logo.png'
+            player_name = rank.pitcher.name_ko if rank.pitcher else '알 수 없음'
+            result.append({
+                'nickname': rank.user.nickname,
+                'profile_image': rank.user.profile_image,
+                'player_name': player_name,
+                'player_image': safe_image_name,
+                'score': rank.score,
+                'type': 'pitch'
+            })
+            
+    return jsonify(result)
+
+
+@api_bp.route('/battle_feed', methods=['GET'])
+def get_battle_feed():
+    """
+    대결 화면의 실시간 피드 및 검색 결과를 반환합니다.
+    """
+    query = request.args.get('q', '')
+    
+    from app.models.analysis import Analysis
+    from app.models.user import User
+    
+    base_query = Analysis.query.join(User).order_by(Analysis.created_at.desc())
+    
+    if query:
+        base_query = base_query.filter(User.nickname.ilike(f'%{query}%'))
         
+    recent_analyses = base_query.limit(30).all()
+    
+    result = []
+    for analysis in recent_analyses:
+        if analysis.analysis_type == 'pitch' and analysis.pitcher:
+            player_name = analysis.pitcher.name_ko
+            player_img = analysis.pitcher.name_en + '.jpg'
+            folder = 'pitchers'
+        elif analysis.analysis_type == 'hit' and analysis.hitter:
+            player_name = analysis.hitter.name_ko
+            player_img = analysis.hitter.name_en + '.jpg'
+            folder = 'hitters'
+        else:
+            player_name = '알 수 없음'
+            player_img = 'default_logo.png'
+            folder = 'pitchers'
+            
         result.append({
-            'nickname': rank.user.nickname,
-            'profile_image': rank.user.profile_image,
-            'pitcher_name': rank.pitcher.name_ko,
-            'pitcher_image': safe_image_name,
-            'score': rank.score
+            'analysis_id': analysis.id,
+            'nickname': analysis.user.nickname,
+            'profile_image': analysis.user.profile_image,
+            'type': analysis.analysis_type,
+            'score': analysis.similarity,
+            'player_name': player_name,
+            'player_image': f"/static/images/{folder}/{player_img}",
+            'time': analysis.created_at.strftime('%Y-%m-%d %H:%M')
         })
         
     return jsonify(result)

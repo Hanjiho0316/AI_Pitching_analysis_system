@@ -13,7 +13,7 @@ app = create_app()
 with app.app_context():
     from app.models.analysis import Analysis
     from app.models.pitcher import Pitcher
-    from app.models.ranking import Ranking
+    from app.models.ranking import PitcherRanking, HitterRanking
     from app.models.user import User
     db.create_all()
 
