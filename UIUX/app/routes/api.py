@@ -2,14 +2,16 @@
 클라이언트(주로 JavaScript)와 데이터를 JSON 형태로 주고받는 API 라우터입니다.
 중복 검사, 파일 업로드 처리 및 백그라운드 분석 작업 상태 조회를 담당합니다.
 """
-import os
+import base64
 import uuid
+import os
 from datetime import datetime
 from flask import Blueprint, request, jsonify, current_app
 from flask_login import current_user
 from werkzeug.utils import secure_filename
 from app.models.user import User
 from app.models.ranking import PitcherRanking, HitterRanking
+from app.models.analysis import Analysis
 from app.services.ml_service import start_analysis_task, get_task_status
 
 api_bp = Blueprint('api', __name__)
@@ -221,3 +223,47 @@ def get_battle_feed():
         })
         
     return jsonify(result)
+
+@api_bp.route('/save_card', methods=['POST'])
+def save_card():
+    import base64
+    import uuid
+    import os
+    from datetime import datetime
+    from flask import request, current_app, jsonify
+    from flask_login import current_user
+    from app.models.analysis import Analysis
+    from app import db
+    
+    if not current_user.is_authenticated:
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    data = request.json
+    analysis_id = data.get('analysis_id')
+    image_data = data.get('image_data')
+    
+    if not analysis_id or not image_data:
+        return jsonify({'error': 'Missing data'}), 400
+        
+    if ',' in image_data:
+        image_data = image_data.split(',')[1]
+        
+    img_bytes = base64.b64decode(image_data)
+    
+    user_folder = os.path.join(current_app.config['RESULT_FOLDER'], str(current_user.id))
+    os.makedirs(user_folder, exist_ok=True)
+    
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    unique_id = uuid.uuid4().hex[:8]
+    filename = f"{timestamp}_{unique_id}.png"
+    filepath = os.path.join(user_folder, filename)
+    
+    with open(filepath, 'wb') as f:
+        f.write(img_bytes)
+        
+    analysis = Analysis.query.get(analysis_id)
+    if analysis and analysis.user_id == current_user.id:
+        analysis.result_image_path = f"{current_user.id}/{filename}"
+        db.session.commit()
+        
+    return jsonify({'success': True})

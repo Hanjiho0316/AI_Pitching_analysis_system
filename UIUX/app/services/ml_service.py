@@ -369,7 +369,14 @@ def process_video_background(task_id, filepath, ml_model_path, encoder_path, yol
                 if current_score > user.best_score:
                     user.best_score = current_score
                 
+                # 마이페이지 표기용 절대 최고 점수 갱신
+                if current_score > user.best_score:
+                    user.best_score = current_score
+                
                 db.session.commit()
+                
+                # 커밋 후 발급된 새로운 분석 기록의 고유 ID를 저장합니다.
+                task_store[task_id]['analysis_id'] = new_analysis.id
 
         task_store[task_id]['status'] = 'completed'
         

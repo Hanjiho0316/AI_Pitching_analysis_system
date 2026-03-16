@@ -20,8 +20,16 @@
     .share-section h2 { color: var(--text-primary); margin-bottom: 30px; font-size: 1.5rem; }
     
     #pitch-card { background: linear-gradient(145deg, #0a192f, #112240); width: 400px; padding: 0; border-radius: 25px; margin: 0 auto 30px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); border: 4px solid #ffd700; overflow: hidden; text-align: left; color: white; }
-    .card-visual { position: relative; width: 100%; height: 300px; background: #000; overflow: hidden; }
-    .card-player-img { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+    .card-visual { 
+        position: relative; 
+        width: 100%; 
+        height: 300px; 
+        background-color: #000; 
+        background-size: cover; 
+        background-position: center top; 
+        background-repeat: no-repeat; 
+        overflow: hidden; 
+    }
     .card-score-overlay { position: absolute; top: 20px; right: 20px; background: rgba(25, 118, 210, 0.9); padding: 10px 20px; border-radius: 15px; font-size: 1.5rem; border: 2px solid #ffd700; color: white; }
     
     .card-body { padding: 25px; }
@@ -70,8 +78,11 @@
     <div class="share-section">
         <h2>분석 결과 카드</h2>
         <div id="pitch-card">
-            <div class="card-visual">
-                <img src="{{ url_for('static', filename='images/pitchers/' + pitcher.name_en + '.jpg') }}" class="card-player-img" alt="선수 이미지" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+            <div class="card-visual" id="pitch-visual-bg">
+                <img src="{{ url_for('static', filename='images/pitchers/' + pitcher.name_en + '.jpg') }}"
+                     style="display: none;"
+                     onload="document.getElementById('pitch-visual-bg').style.backgroundImage = `url('${this.src}')`"
+                     onerror="document.getElementById('pitch-visual-bg').style.backgroundImage = `url('{{ url_for('static', filename='images/default_logo.png') }}')`">
                 <div class="card-score-overlay">{{ result.similarity }}%</div>
             </div>
             
@@ -106,12 +117,39 @@
 
 <script>
     function saveCard() {
-        html2canvas(document.getElementById("pitch-card"), {backgroundColor: null}).then(canvas => {
+        html2canvas(document.getElementById("pitch-card"), {
+            backgroundColor: null,
+            scale: 2,
+            useCORS: true
+        }).then(canvas => {
             let link = document.createElement('a');
             link.download = 'pitchtypes_result.png';
-            link.href = canvas.toDataURL();
+            link.href = canvas.toDataURL('image/png', 1.0);
             link.click();
         });
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            const cardElement = document.getElementById("pitch-card");
+            if (!cardElement) return;
+            
+            html2canvas(cardElement, {
+                backgroundColor: null,
+                scale: 2,
+                useCORS: true
+            }).then(canvas => {
+                const imageData = canvas.toDataURL('image/png', 1.0);
+                fetch('/api/save_card', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        analysis_id: {{ analysis_id }},
+                        image_data: imageData
+                    })
+                });
+            });
+        }, 1500);
+    });
 </script>
 {% endblock %}

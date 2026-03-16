@@ -56,6 +56,7 @@ def result_pitch():
         
     analysis_result = task_info['result']
     filepath = task_info['filepath']
+    analysis_id = task_info.get('analysis_id')
     
     path_parts = os.path.normpath(filepath).split(os.sep)
     user_folder = path_parts[-2]
@@ -78,7 +79,7 @@ def result_pitch():
     from app.models.analysis import Analysis
     recent_analyses = Analysis.query.filter_by(analysis_type='pitch').order_by(Analysis.created_at.desc()).limit(3).all()
     
-    return render_template('result_pitch.html', result=analysis_result, pitcher=pitcher_info, filename=relative_filename, recent_analyses=recent_analyses)
+    return render_template('result_pitch.html', result=analysis_result, pitcher=pitcher_info, filename=relative_filename, recent_analyses=recent_analyses, analysis_id=analysis_id)
 
 
 @main_bp.route('/result_hit')
@@ -98,6 +99,7 @@ def result_hit():
         
     analysis_result = task_info['result']
     filepath = task_info['filepath']
+    analysis_id = task_info.get('analysis_id')
     
     path_parts = os.path.normpath(filepath).split(os.sep)
     user_folder = path_parts[-2]
@@ -121,7 +123,7 @@ def result_hit():
     from app.models.analysis import Analysis
     recent_analyses = Analysis.query.filter_by(analysis_type='hit').order_by(Analysis.created_at.desc()).limit(3).all()
     
-    return render_template('result_hit.html', result=analysis_result, hitter=hitter_info, filename=relative_filename, recent_analyses=recent_analyses)
+    return render_template('result_hit.html', result=analysis_result, hitter=hitter_info, filename=relative_filename, recent_analyses=recent_analyses, analysis_id=analysis_id)
 
 
 @main_bp.route('/result_battle')

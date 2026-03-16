@@ -60,7 +60,6 @@
     .badge-pitch { background-color: rgba(25, 118, 210, 0.1); color: #1976d2; }
     .badge-hit { background-color: rgba(211, 47, 47, 0.1); color: #d32f2f; }
 
-    /* 대결 종목 선택 모달 */
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background-color: rgba(0,0,0,0.5);
@@ -94,8 +93,7 @@
 
     <input type="text" id="searchInput" class="search-box" placeholder="유저 닉네임을 검색하여 타겟을 찾아보세요...">
 
-    <div class="feed-list" id="feedList">
-        </div>
+    <div class="feed-list" id="feedList"></div>
 </div>
 
 <div class="modal-overlay" id="battleModal">
@@ -109,6 +107,7 @@
 
 <script>
     let currentTargetId = null;
+    let feedPollingInterval;
 
     document.addEventListener('DOMContentLoaded', () => {
         loadFeed();
@@ -116,21 +115,29 @@
         document.getElementById('searchInput').addEventListener('input', (e) => {
             loadFeed(e.target.value);
         });
+
+        // 5초마다 실시간으로 피드를 업데이트합니다.
+        feedPollingInterval = setInterval(() => {
+            const currentQuery = document.getElementById('searchInput').value;
+            loadFeed(currentQuery, true);
+        }, 5000);
     });
 
-    async function loadFeed(query = '') {
+    async function loadFeed(query = '', isSilent = false) {
         try {
             const response = await fetch(`/api/battle_feed?q=${encodeURIComponent(query)}`);
             const data = await response.json();
             
             const container = document.getElementById('feedList');
-            container.innerHTML = '';
             
             if (data.length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 40px;">일치하는 기록이 없습니다.</div>';
+                if (!isSilent || container.innerHTML === '') {
+                    container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 40px;">일치하는 기록이 없습니다.</div>';
+                }
                 return;
             }
 
+            const tempDiv = document.createElement('div');
             data.forEach(item => {
                 const badgeClass = item.type === 'pitch' ? 'badge-pitch' : 'badge-hit';
                 const badgeText = item.type === 'pitch' ? '투구 기록' : '타격 기록';
@@ -155,8 +162,13 @@
                         <span class="feed-score">${item.score}%</span>
                     </div>
                 `;
-                container.appendChild(div);
+                tempDiv.appendChild(div);
             });
+            
+            container.innerHTML = '';
+            while (tempDiv.firstChild) {
+                container.appendChild(tempDiv.firstChild);
+            }
         } catch (error) {
             console.error('피드 로드 실패', error);
         }
@@ -174,8 +186,6 @@
 
     function startBattle(myType) {
         if (!currentTargetId) return;
-        
-        // 종목에 맞는 업로드 페이지로 이동하되, URL에 타겟 기록 번호를 달아서 보냅니다.
         if (myType === 'pitch') {
             window.location.href = `/upload_pitch?target_id=${currentTargetId}`;
         } else {

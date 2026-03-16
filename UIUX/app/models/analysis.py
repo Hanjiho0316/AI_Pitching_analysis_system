@@ -22,7 +22,8 @@ class Analysis(db.Model):
     hitter_id = db.Column(db.Integer, db.ForeignKey('hitters.id'), nullable=True)
     similarity = db.Column(db.Float, nullable=False)
     user_video_path = db.Column(db.String(255), nullable=False)
+    result_image_path = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.now)
-    
+
     pitcher = db.relationship('Pitcher', backref='analysis_records')
     hitter = db.relationship('Hitter', backref='analysis_records')

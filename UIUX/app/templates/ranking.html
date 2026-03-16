@@ -351,9 +351,9 @@
             </div>
             <div class="avatar-group">
                 <img src="/static/images/${folder}/${rankData.player_image}" class="pitcher-avatar" alt="Player" onerror="this.src='/static/images/default_logo.png'">
-                <img src="/static/uploads/profiles/${rankData.profile_image}" class="user-avatar" alt="User" onerror="this.src='/static/images/default_logo.png'">
+                <img src="/static/uploads/profiles/${rankData.profile_image}" class="user-avatar" alt="User" onerror="this.src='/static/images/default_logo.png'" style="cursor: pointer;" onclick="window.location.href='/mypage/${rankData.nickname}'">
             </div>
-            <div class="ranking-info">
+            <div class="ranking-info" style="cursor: pointer;" onclick="window.location.href='/mypage/${rankData.nickname}'">
                 <span class="rank-name">${rankData.nickname}</span>
                 <span class="pitcher-name">${rankData.player_name}</span>
                 <span class="rank-score">${rankData.score}%</span>
@@ -376,7 +376,7 @@
                 <div style="display: flex; align-items: center; gap: 30px;">
                     <span style="font-size: 1.4rem; font-weight: 700; width: 30px; color: var(--text-primary); text-align: center;">${actualRank}</span>
                     
-                    <div class="list-col">
+                    <div class="list-col" style="cursor: pointer;" onclick="window.location.href='/mypage/${rankData.nickname}'">
                         <img src="/static/uploads/profiles/${rankData.profile_image}" class="list-user-avatar" alt="User" onerror="this.src='/static/images/default_logo.png'">
                         <span class="list-name-text">${rankData.nickname}</span>
                     </div>

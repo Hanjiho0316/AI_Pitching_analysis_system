@@ -160,7 +160,9 @@
         <div class="history-list">
             {% if analyses %}
                 {% for analysis in analyses %}
-                <div class="history-item {% if analysis.analysis_type == 'pitch' %}pitch-record{% else %}hit-record{% endif %}">
+                <div class="history-item {% if analysis.analysis_type == 'pitch' %}pitch-record{% else %}hit-record{% endif %}" 
+                     {% if analysis.result_image_path %}onclick="showCard('{{ url_for('static', filename='results/' ~ analysis.result_image_path) }}')"{% endif %} 
+                     style="cursor: pointer;">
                     <div class="history-left">
                         {% if analysis.analysis_type == 'pitch' %}
                             <img src="{{ url_for('static', filename='images/pitchers/' ~ analysis.pitcher.name_en ~ '.jpg') }}" class="history-pitcher-img" alt="Pitcher" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
@@ -189,4 +191,18 @@
         </div>
     </div>
 </div>
+
+<div id="cardModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+    <div style="position:relative; max-width:400px; width:90%; text-align:center;">
+        <button onclick="document.getElementById('cardModal').style.display='none'" style="position:absolute; top:-45px; right:-10px; background:transparent; border:none; color:#fff; font-size:2.5rem; cursor:pointer;">&times;</button>
+        <img id="modalCardImg" src="" style="max-width:100%; max-height:80vh; border-radius:25px; box-shadow:0 10px 40px rgba(0,0,0,0.5); object-fit:contain;">
+    </div>
+</div>
+
+<script>
+    function showCard(imgUrl) {
+        document.getElementById('modalCardImg').src = imgUrl;
+        document.getElementById('cardModal').style.display = 'flex';
+    }
+</script>
 {% endblock %}
