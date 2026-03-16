@@ -112,7 +112,7 @@ Model Evaluation
 모델이 영상을 분석하면 다음과 같은 결과가 출력됩니다.
 
 ```text
-[1/3] Extracting pose from: goyoungpyo.mp4
+[1/3] Extracting pose from: example.mp4
 [2/3] Preprocessing...
 [3/3] Running inference...
 
