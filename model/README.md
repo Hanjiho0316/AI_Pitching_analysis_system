@@ -92,3 +92,15 @@ Model Training
    ↓
 Model Evaluation
 ```
+
+---
+
+# Example Result
+
+## Skeleton Detection Example
+
+투수 영상을 입력하면 스켈레톤 랜드마크가 추출되고 투구 동작이 자동으로 감지됩니다.
+
+![Pitch Skeleton Demo](images/pitch_demo.gif)
+
+---
