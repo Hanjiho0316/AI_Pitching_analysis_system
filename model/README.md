@@ -104,3 +104,25 @@ Model Evaluation
 ![Pitch Skeleton Demo](images/pitch_demo.gif)
 
 ---
+
+---
+
+## Output Example
+
+모델이 영상을 분석하면 다음과 같은 결과가 출력됩니다.
+
+```text
+[1/3] Extracting pose from: goyoungpyo.mp4
+[2/3] Preprocessing...
+[3/3] Running inference...
+
+📊 All Results (sorted by confidence):
+  2021Goyoungpo.mp4               75.1%
+  2014Hanhyunhee.mp4               8.5%
+  2025Ohtani                       1.7%
+  2019leeseungho                   1.3%
+  2018kimkwanghyeon.mp4            1.2%
+  2021Kimjaeyoon.mp4               1.1%
+  2025SpencerSchwellenbach         0.7%
+
+🎯 Result: 2021Goyoungpo.mp4 (75.1% confidence)
