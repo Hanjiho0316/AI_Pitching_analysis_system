@@ -26,7 +26,6 @@ UIUX/data/*.json
 
 # 사용자 업로드 파일 및 분석 결과
 UIUX/app/static/uploads/*
-UIUX/app/static/images/*
 !UIUX/app/static/images/pitchers
 UIUX/app/static/results/*
 !UIUX/app/static/uploads/.gitkeep

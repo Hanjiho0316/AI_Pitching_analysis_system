@@ -75,9 +75,10 @@ def result_pitch():
     if analysis_result['similarity'] < 3.0:
         return render_template('failure.html')
     
-    top_rankings = PitcherRanking.query.order_by(PitcherRanking.score.desc()).limit(3).all()
+    from app.models.analysis import Analysis
+    recent_analyses = Analysis.query.filter_by(analysis_type='pitch').order_by(Analysis.created_at.desc()).limit(3).all()
     
-    return render_template('result_pitch.html', result=analysis_result, pitcher=pitcher_info, filename=relative_filename, top_rankings=top_rankings)
+    return render_template('result_pitch.html', result=analysis_result, pitcher=pitcher_info, filename=relative_filename, recent_analyses=recent_analyses)
 
 
 @main_bp.route('/result_hit')
@@ -117,10 +118,10 @@ def result_hit():
     if analysis_result['similarity'] < 3.0:
         return render_template('failure.html')
     
-    from app.models.ranking import HitterRanking
-    top_rankings = HitterRanking.query.order_by(HitterRanking.score.desc()).limit(3).all()
+    from app.models.analysis import Analysis
+    recent_analyses = Analysis.query.filter_by(analysis_type='hit').order_by(Analysis.created_at.desc()).limit(3).all()
     
-    return render_template('result_hit.html', result=analysis_result, hitter=hitter_info, filename=relative_filename, top_rankings=top_rankings)
+    return render_template('result_hit.html', result=analysis_result, hitter=hitter_info, filename=relative_filename, recent_analyses=recent_analyses)
 
 
 @main_bp.route('/result_battle')
