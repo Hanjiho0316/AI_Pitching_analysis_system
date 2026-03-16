@@ -1,5 +1,5 @@
 # from video_extract_interpolation import analyze_pitcher_video <-- 미디어파이프
-from pitcher_extract_yolo import analyze_pitcher_video  # <-- YOLOv8n
+from video_extract_interpolation_pitcher import analyze_pitcher_video  # <-- YOLOv8n
 import os
 
 def video_analyze_iteration():
