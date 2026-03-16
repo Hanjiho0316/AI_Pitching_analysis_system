@@ -1,6 +1,3 @@
-####
-## 자동 클립 생성용 코드
-####
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -19,7 +16,9 @@ def analyze_pitcher_video(video_name):
     # 모델 및 도구 초기화
     model = YOLO("yolov8n.pt")
     mp_pose = mp.solutions.pose
-    pose = mp_pose.Pose(model_complexity=2, min_detection_confidence=0.7, min_tracking_confidence=0.7)
+    pose = mp_pose.Pose(model_complexity=2, 
+                        min_detection_confidence=0.7, 
+                        min_tracking_confidence=0.7)
     mp_drawing = mp.solutions.drawing_utils
 
     JOINT_MAP = {
