@@ -13,8 +13,75 @@
     .upload-card { flex: 1; min-width: 320px; background: var(--card-bg); padding: 50px 40px; border-radius: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); text-align: center; border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: center; }
     .upload-card-title { color: var(--text-primary); font-size: 1.5rem; margin-bottom: 10px; }
     
-    .drop-zone { border: 2px dashed var(--divider-color); padding: 60px 20px; border-radius: 20px; background: var(--hover-bg); cursor: pointer; transition: all 0.3s ease; margin-bottom: 25px; margin-top: 20px; }
+    .drop-zone { border: 2px dashed var(--divider-color); padding: 40px 20px; border-radius: 20px; background: var(--hover-bg); cursor: pointer; transition: all 0.3s ease; margin-bottom: 20px; margin-top: 15px; }
     .drop-zone:hover, .drop-zone.dragover { border-color: var(--text-primary); background: var(--card-bg); }
+    
+    /* 슬라이더 토글 버튼 스타일 리뉴얼 */
+    .handedness-toggle {
+        display: flex;
+        position: relative;
+        background-color: var(--hover-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 40px;
+        padding: 6px;
+        width: 260px;
+        margin: 0 auto 25px auto;
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .handedness-toggle input[type="radio"] {
+        display: none;
+    }
+    .handedness-toggle label {
+        flex: 1;
+        text-align: center;
+        padding: 12px 0;
+        cursor: pointer;
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        z-index: 2;
+        transition: color 0.3s ease;
+        margin: 0;
+    }
+    .handedness-toggle .slider {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        width: calc(50% - 6px);
+        height: calc(100% - 12px);
+        border-radius: 34px;
+        z-index: 1;
+        transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.4s ease;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+    
+    /* 좌측(좌투/좌타) 선택 시 주황색 테마 적용 */
+    .handedness-toggle input[value="left"]:checked ~ .slider {
+        transform: translateX(0);
+        background-color: #f57c00; 
+    }
+    
+    /* 우측(우투/우타) 선택 시 초록색 테마 적용 */
+    .handedness-toggle input[value="right"]:checked ~ .slider {
+        transform: translateX(100%);
+        background-color: #2e7d32; 
+    }
+    
+    /* 선택된 항목의 텍스트 색상을 흰색으로 변경 */
+    .handedness-toggle input[type="radio"]:checked + label {
+        color: #ffffff;
+    }
+    #left-hit:checked ~ .slider {
+        transform: translateX(0);
+    }
+    #right-hit:checked ~ .slider {
+        transform: translateX(100%);
+    }
+    #left-hit:checked + label,
+    #right-hit:checked + label {
+        color: #ffffff;
+        font-weight: 600;
+    }
     
     .btn-upload { background: var(--button-bg); color: var(--button-text); border: none; padding: 18px; width: 100%; border-radius: 16px; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
     .btn-upload:hover { opacity: 0.9; transform: translateY(-2px); }
@@ -28,7 +95,7 @@
     <div class="instruction-section">
         <h2 class="instruction-title">정확한 타격 분석을 위한 촬영 가이드</h2>
         <ul class="instruction-list">
-            <li>타자의 정면(투수 시점) 또는 측면에서 촬영된 영상이어야 합니다.</li>
+            <li>타자의 정면(투수 방향)에서 촬영된 영상이어야 합니다.</li>
             <li>타격 준비 동작부터 스윙 후의 마무리 동작까지 모두 포함되어야 합니다.</li>
             <li>카메라가 흔들리지 않도록 고정된 상태에서 촬영하는 것을 권장합니다.</li>
             <li>머리부터 발끝, 그리고 배트의 끝부분까지 영상 화면 안에 온전히 들어와야 합니다.</li>
@@ -45,6 +112,17 @@
                 <span id="fileName" style="color: var(--text-primary); line-height: 1.5;">영상을 이쪽으로 끌어오세요<br>(또는 클릭하여 선택)</span>
                 <input type="file" name="video_file" id="fileInput" style="display:none" accept="video/*">
             </div>
+
+            <div class="handedness-toggle">
+                <input type="radio" name="handedness" id="left-hit" value="left">
+                <label for="left-hit">좌타</label>
+                
+                <input type="radio" name="handedness" id="right-hit" value="right" checked>
+                <label for="right-hit">우타</label>
+                
+                <div class="slider"></div>
+            </div>
+
             <button type="submit" class="btn-upload">타격 폼 분석 가동하기</button>
         </form>
         
@@ -97,7 +175,8 @@
 
         const formData = new FormData();
         formData.append('video_file', fileInput.files[0]);
-        formData.append('analysis_type', 'hit'); // 타격 분석임을 서버에 알림
+        formData.append('analysis_type', 'hit');
+        formData.append('handedness', document.querySelector('input[name="handedness"]:checked').value);
 
         try {
             const response = await fetch('/api/upload_async', {
@@ -130,7 +209,6 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const targetId = urlParams.get('target_id');
                 
-                // 대결 모드일 경우 대결 결과창으로, 일반 모드일 경우 타격 결과창으로 분기합니다.
                 if (targetId) {
                     window.location.href = `/result_battle?task_id=${taskId}&target_id=${targetId}`;
                 } else {

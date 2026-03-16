@@ -67,12 +67,11 @@ def check_nickname():
 def upload_async():
     """
     사용자가 업로드한 영상을 서버에 저장하고, 백그라운드 분석 작업을 시작합니다.
-    분석 타입(pitch/hit)에 따라 적절한 모델을 선택합니다.
+    분석 타입(pitch/hit) 및 주사용 손(right/left)에 따라 적절한 모델 및 전처리를 선택합니다.
     """
-    # 프론트엔드에서 전달받은 분석 타입 (기본값: pitch)
     analysis_type = request.form.get('analysis_type', 'pitch')
+    handedness = request.form.get('handedness', 'right')
     
-    # 투구 업로드와 타격 업로드의 파일 폼 이름 호환성 처리
     file = request.files.get('video_file') or request.files.get('pitching_video')
     
     if not file or file.filename == '':
@@ -97,7 +96,6 @@ def upload_async():
         filepath = os.path.join(upload_folder, unique_filename)
         file.save(filepath)
         
-        # 분석 종류에 따른 모델 설정 분기
         if analysis_type == 'hit':
             ml_model_path = current_app.config.get('HIT_ML_MODEL_PATH')
             encoder_path = current_app.config.get('HIT_LABEL_ENCODER_PATH')
@@ -117,7 +115,8 @@ def upload_async():
             yolo_path, 
             app_instance, 
             user_id,
-            analysis_type
+            analysis_type,
+            handedness
         )
         
         return jsonify({'task_id': task_id, 'status': 'started'})
