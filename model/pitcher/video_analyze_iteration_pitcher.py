@@ -1,7 +1,7 @@
 ####
 ## 자동 클립 생성용 코드
 ####
-from video_extract_interpolation import analyze_pitcher_video
+from model.pitcher.video_extract_interpolation_pitcher import analyze_pitcher_video
 
 import os
 
