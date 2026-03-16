@@ -10,13 +10,16 @@
 ```
 model
 ├ pitcher
-│   ├ pitcher_learning
-│   ├ pitcher_modelcheck
-│   └ video_extract_interpolation_pithcer
+│   ├ pitcher_learning (모델 학습 코드)
+│   ├ pitcher_modelcheck (모델 검증 코드)
+│   ├ LRchanger (좌우 반전)
+│   └ video_analyze_iteration_pitcher (폴더 내 mp4 파일 스켈레톤 기반 좌표 추출 코드)
 │
 └ hitter
-    ├ swing_model
-    └ swing_analysis
+    ├ hitter_learning (모델 학습 코드)
+    ├ hitter_detection (모델 검증 코드)
+    ├ LRchanger (좌우 반전)
+    └ video_extract_hitter (폴더 내 mp4 파일 스켈레톤 기반 좌표 추출 코드)
 ```
 
 ---
@@ -36,7 +39,7 @@ model
 ## 사용 모델
 
 * YOLO 기반 플레이어 탐지
-* MediaPipe Pose 기반 스켈레톤 추출
+
 
 ## 처리 과정
 
@@ -46,8 +49,6 @@ Video Input
 Pitcher Detection (YOLO)
    ↓
 Pitcher Tracking
-   ↓
-Pose Estimation (MediaPipe)
    ↓
 Pitch Motion Detection
    ↓
@@ -88,10 +89,3 @@ pitch_clips
 * **png** : 관절 움직임 그래프
 
 ---
-
-# Future Work
-
-* 투구폼 자동 분류 모델
-* 선수별 투구폼 비교 분석
-* 신체 비율 기반 투구폼 추천 모델
-* 실시간 투구 분석 시스템
