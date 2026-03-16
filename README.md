@@ -7,15 +7,24 @@
 ```
 git clone https://github.com/Hanjiho0316/AI_Pitching_analysis_system.git
 ```
+
 2. 패키지 설치
 ```
 pip install -r requirements.txt
 ```
-3. 모델 배치: 학습이 완료된 모델 파일을 `AI_Pitching_analysis_system/UIUX/ml_models/`에 적재한다.
+
+3. 모델 배치
+    학습이 완료된 모델 파일을 `AI_Pitching_analysis_system/UIUX/ml_models/`에 적재한다. 모델 파일 이름은 config.py에서 정의할 수 있다. 
+    기본 값:
+        - 투구 모델: pitch_model.h5, pitch_label_encoder.pkl
+        - 타격 모델: hit_model.h5, hit_label_encoder.pkl
+
 4. 시드 데이터 로드 
 ```
 python UIUX/seed.py
 ```
+    시드 데이터에는 모델이 학습한 투수와 타자의 이름과 설명 등이 포함된다.
+
 5. 웹 서버 실행
 ```
 python UIUX/app.py
@@ -75,7 +84,7 @@ pitching_project/UI/UX
 ├── ml_models/                  # 투구 및 타격 모델 저장 디렉토리
 └── data/
 ```
-- html 파일들 빨간줄떠도 실행 잘됨
+- html 파일들에는 빨간줄떠도 실행에는 문제 없음
 
 # 데이터베이스 구성
 ```mermaid
@@ -143,3 +152,12 @@ erDiagram
 - 랭킹 페이지 혹은 유저 찾기 기능으로 붙을 유저 탐색
 - 유저의 타격, 투구 마지막 혹은 베스트 기록으로 배틀
 - 점수가 더 높으면 승리, 아니면 패배
+
+# 오늘 할 일
+- 투구폼에 타격넣으면 어떻게 거를 것인가? (일단 스킵)
+- 사용자 영상 크기랑 선수 영상 크기 맞추기
+- 실시간 랭킹에는 그냥 최근 3개 분석 보여주기
+- 모델 학습 코드 팔로우업
+- 백엔드 플로우차트 작성
+- 문서 작업
+- 디자인 향상?

@@ -874,7 +874,7 @@ with app.app_context():
             
     # 타자 데이터 적재
     hitter_count = 0
-    for i, data in enumerate(HITTER_SEED_DATA):
+    for data in HITTER_SEED_DATA:
         exists = Hitter.query.filter_by(model_label=data["model_label"]).first()
 
         if not exists:

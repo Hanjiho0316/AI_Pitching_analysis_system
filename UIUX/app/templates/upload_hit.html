@@ -130,11 +130,11 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const targetId = urlParams.get('target_id');
                 
+                // 대결 모드일 경우 대결 결과창으로, 일반 모드일 경우 타격 결과창으로 분기합니다.
                 if (targetId) {
                     window.location.href = `/result_battle?task_id=${taskId}&target_id=${targetId}`;
                 } else {
-                    // 주의: upload_hit.html 파일에서는 아래 경로를 /result_hit 으로 변경해 주십시오.
-                    window.location.href = `/result_pitch?task_id=${taskId}`;
+                    window.location.href = `/result_hit?task_id=${taskId}`;
                 }
             } else if (data.status === 'error') {
                 clearInterval(statusInterval);
