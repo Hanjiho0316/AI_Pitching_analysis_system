@@ -10,9 +10,9 @@
 ```
 model
 ├ pitcher
-│   ├ pitching_detect
-│   ├ pitching_model
-│   └ pitching_skeleton
+│   ├ pitcher_learning
+│   ├ pitcher_modelcheck
+│   └ video_extract_interpolation_pithcer
 │
 └ hitter
     ├ swing_model
