@@ -152,49 +152,49 @@ erDiagram
 # 시스템 다이어그램
 ```mermaid
 graph TD
-    subgraph 클라이언트 (Frontend)
+    subgraph Frontend["클라이언트 (Frontend)"]
         UI[웹 브라우저]
         Upload[영상 업로드 및 결과 확인]
         Template[Jinja2 HTML 템플릿]
     end
 
-    subgraph 웹 서버 (Backend - Flask)
+    subgraph Backend["웹 서버 (Backend - Flask)"]
         Router[라우터: main.py / api.py]
         Auth[사용자 인증: auth.py]
         TaskMgr[비동기 작업 관리]
     end
 
-    subgraph 데이터 및 스토리지
+    subgraph StorageDB["데이터 및 스토리지"]
         DB[(SQLite 데이터베이스)]
         Storage[로컬 파일 스토리지]
     end
 
-    subgraph AI 분석 엔진 (Background Thread)
+    subgraph AIEngine["AI 분석 엔진 (Background Thread)"]
         CV[OpenCV: 프레임 추출]
         YOLO[YOLOv8 Pose: 관절 키포인트 추출]
         Pre[Pandas/NumPy: 결측치 보간 및 스무딩]
         TF[TensorFlow: 폼 유사도 예측]
     end
 
-    UI -- HTTP POST (영상 업로드) --> Router
-    UI -- HTTP GET (화면 렌더링) --> Template
-    Template -- 렌더링 --> UI
+    UI -->|HTTP POST 영상 업로드| Router
+    UI -->|HTTP GET 화면 렌더링| Template
+    Template -->|렌더링| UI
 
-    Router -- 파일 저장 --> Storage
-    Router -- 로그인/회원가입 --> Auth
-    Auth -- 계정 검증 --> DB
-    Router -- 분석 기록 및 랭킹 조회 --> DB
+    Router -->|파일 저장| Storage
+    Router -->|로그인 및 회원가입| Auth
+    Auth -->|계정 검증| DB
+    Router -->|분석 기록 및 랭킹 조회| DB
 
-    Router -- 분석 작업 할당 --> TaskMgr
-    TaskMgr -- 비디오 경로 전달 --> CV
-    CV -- 영상 프레임 --> YOLO
-    YOLO -- 13개 관절 좌표 --> Pre
-    Pre -- 정규화 및 패딩된 데이터 --> TF
-    TF -- 분석 결과 반환 --> TaskMgr
+    Router -->|분석 작업 할당| TaskMgr
+    TaskMgr -->|비디오 경로 전달| CV
+    CV -->|영상 프레임| YOLO
+    YOLO -->|13개 관절 좌표| Pre
+    Pre -->|정규화 및 패딩| TF
+    TF -->|분석 결과 반환| TaskMgr
 
-    TaskMgr -- 분석 결과 및 점수 저장 --> DB
-    UI -- 폴링 (상태 확인) --> Router
-    Router -- 진행 상태 반환 --> TaskMgr
+    TaskMgr -->|분석 결과 및 점수 저장| DB
+    UI -->|상태 확인 폴링| Router
+    Router -->|진행 상태 반환| TaskMgr
 ```
 
 # 오늘 할 일
