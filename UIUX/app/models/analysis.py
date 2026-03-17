@@ -15,6 +15,8 @@ class Analysis(db.Model):
         similarity (float): 모델이 계산한 투구 폼 유사도 (0~1 사이 값)
         user_video_path (str): 서버 내 저장된 사용자 업로드 영상의 상대 경로
     """
+    __tablename__ = 'analyses'
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     analysis_type = db.Column(db.String(10), nullable=False, default='pitch')
