@@ -8,6 +8,7 @@ from flask_login import login_required
 from app.services.ml_service import get_task_status
 from app.models.analysis import Analysis
 from app.models.pitcher import Pitcher 
+from app.models.hitter import Hitter
 from app.models.ranking import PitcherRanking, HitterRanking
 from app.models.user import User
 
@@ -225,3 +226,29 @@ def mypage(nickname):
 def settings():
     """사용자 환경설정 화면을 렌더링합니다."""
     return render_template('settings.html')
+
+
+@main_bp.route('/roster')
+def roster():
+    """선수 명단 화면을 렌더링합니다. (가나다순 정렬 및 중복 제거)"""
+    pitchers_raw = Pitcher.query.order_by(Pitcher.name_ko.asc()).all()
+    from app.models.hitter import Hitter
+    hitters_raw = Hitter.query.order_by(Hitter.name_ko.asc()).all()
+
+    # 투수 명단 중복 제거 (이름 기준)
+    seen_pitchers = set()
+    pitchers = []
+    for p in pitchers_raw:
+        if p.name_ko not in seen_pitchers:
+            seen_pitchers.add(p.name_ko)
+            pitchers.append(p)
+
+    # 타자 명단 중복 제거 (이름 기준)
+    seen_hitters = set()
+    hitters = []
+    for h in hitters_raw:
+        if h.name_ko not in seen_hitters:
+            seen_hitters.add(h.name_ko)
+            hitters.append(h)
+
+    return render_template('roster.html', pitchers=pitchers, hitters=hitters)

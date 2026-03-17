@@ -195,7 +195,7 @@ PITCHER_SEED_DATA = [
     },
     {
         "model_label": "2018kimkwanghyeon.mp4",
-        "name_en": "kimwanghyun",
+        "name_en": "kimkwanghyun",
         "name_ko": "김광현",
         "desc": "KBO를 대표하는 좌완 에이스이자 전매특허인 강력한 슬라이더의 소유자"
     },
@@ -715,7 +715,7 @@ HITTER_SEED_DATA = [
     {
         "model_label": "PeteCrow-Armstrong",
         "name_en": "petecrowarmstrong",
-        "name_ko": "피트 크로 암스트롱",
+        "name_ko": "피트 크로우암스트롱",
         "desc": "빠른 배트 스피드와 폭발적인 주력을 바탕으로 타선에 활력을 불어넣는 유망주"
     },
     {
@@ -793,7 +793,7 @@ HITTER_SEED_DATA = [
     {
         "model_label": "aaronjudge",
         "name_en": "aaronjudge",
-        "name_ko": "에런 저지",
+        "name_ko": "애런 저지",
         "desc": "경이로운 체격에서 나오는 압도적인 파워로 메이저리그 홈런 기록을 써 내려가는 거포"
     },
     {
