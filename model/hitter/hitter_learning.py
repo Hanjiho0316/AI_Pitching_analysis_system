@@ -3,6 +3,17 @@
 ####
 import os
 import sys
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import tensorflow as tf
+from tensorflow.keras import layers, models, optimizers, regularizers
+from sklearn.model_selection import StratifiedKFold
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import f1_score  # F1 Score 계산용
+import joblib
+import random
+import csv
 
 # ==============================
 # 0. GPU 환경 강제 설정 (기존 작동 방식 유지)
@@ -16,15 +27,6 @@ if os.path.exists(dll_path):
         os.add_dll_directory(dll_path)
     print(f"🚀 핵심 DLL 경로 최우선 설정: {dll_path}")
 
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import tensorflow as tf
-from tensorflow.keras import layers, models, optimizers, regularizers
-from sklearn.model_selection import StratifiedKFold
-from sklearn.preprocessing import LabelEncoder
-import joblib
-import random
 # GPU 인식 확인 및 메모리 설정
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 gpus = tf.config.list_physical_devices('GPU')
@@ -36,8 +38,10 @@ if gpus:
     except RuntimeError as e:
         print(f"❌ GPU 설정 오류: {e}")
 
+
+
 # ==============================
-# 1. 하이퍼파라미터 (경량화 설정)
+# 1. 하이퍼파라미터
 # ==============================
 DATA_ROOT = r"C:\Users\kccistc\Desktop\workspace\project\batter_output_results"
 MAX_FRAMES = 60    
@@ -46,14 +50,50 @@ CHANNELS = 6
 BATCH_SIZE = 64  
 EPOCHS = 1000     
 K_FOLDS = 5  
-MODEL_SAVE_DIR = "saved_models_lite"
+MODEL_SAVE_DIR = "saved_models_final"
 final_h5_path = os.path.join(MODEL_SAVE_DIR, "final_best_model.h5")
-final_tflite_path = os.path.join(MODEL_SAVE_DIR, "final_best_model.tflite")
 
 if not os.path.exists(MODEL_SAVE_DIR): os.makedirs(MODEL_SAVE_DIR)
 
 # ==============================
-# 2. 전처리 및 증강 (기존 유지)
+# 2. 커스텀 로그 콜백 (F1-Score 포함)
+# ==============================
+class FoldLogger(tf.keras.callbacks.Callback):
+    def __init__(self, fold_no, val_data, log_dir):
+        super().__init__()
+        self.fold_no = fold_no
+        self.X_val, self.y_val = val_data
+        self.log_path = os.path.join(log_dir, f"fold_{fold_no}_epoch_logs.csv")
+        
+        with open(self.log_path, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(['epoch', 'loss', 'accuracy', 'val_loss', 'val_accuracy', 'val_f1_score'])
+
+    def on_epoch_end(self, epoch, logs=None):
+        logs = logs or {}
+        # 검증 데이터 예측 및 F1 계산
+        val_pred = self.model.predict(self.X_val, verbose=0)
+        val_pred_labels = np.argmax(val_pred, axis=1)
+        val_true_labels = np.argmax(self.y_val, axis=1)
+        f1 = f1_score(val_true_labels, val_pred_labels, average='weighted')
+        
+        row = [
+            epoch + 1,
+            f"{logs.get('loss', 0):.4f}",
+            f"{logs.get('accuracy', 0):.4f}",
+            f"{logs.get('val_loss', 0):.4f}",
+            f"{logs.get('val_accuracy', 0):.4f}",
+            f"{f1:.4f}"
+        ]
+
+        with open(self.log_path, 'a', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(row)
+        
+        print(f" - val_f1_score: {f1:.4f}")
+
+# ==============================
+# 3. 데이터 로드 및 전처리
 # ==============================
 def apply_3d_augmentation(X, y):
     aug_X, aug_y = [X], [y]
@@ -68,10 +108,7 @@ def apply_3d_augmentation(X, y):
         return nb
     aug_X.append(rotate_y(X, np.random.uniform(-15, 15)))
     aug_y.append(y)
-    X_f = np.concatenate(aug_X, axis=0)
-    y_f = np.concatenate(aug_y, axis=0)
-    idx = np.random.permutation(len(X_f))
-    return X_f[idx].astype('float32'), y_f[idx].astype('float32')
+    return np.concatenate(aug_X, axis=0).astype('float32'), np.concatenate(aug_y, axis=0).astype('float32')
 
 def robust_preprocess_yolo_with_z(df):
     x_cols = [c for c in df.columns if '_x' in c.lower()][:NUM_JOINTS]
@@ -105,43 +142,39 @@ def load_dataset(root_path):
     return np.array(final_x, dtype='float32'), np.array(final_y)
 
 # ==============================
-# 3. 강화된 모델 정의 (Residual Block)
+# 4. 모델 아키텍처
 # ==============================
 def build_model(num_classes):
     inputs = layers.Input(shape=(MAX_FRAMES, NUM_JOINTS, CHANNELS))
     x = layers.Reshape((MAX_FRAMES, NUM_JOINTS * CHANNELS))(inputs)
     
-    # Block 1
-    x = layers.Conv1D(512, 3, padding='same')(x)
+    x = layers.Conv1D(256, 3, padding='same')(x)
     x = layers.BatchNormalization()(x)
     x = layers.Activation('relu')(x)
     
-    # Residual Block
     res = x
-    x = layers.Conv1D(512, 3, padding='same')(x)
+    x = layers.Conv1D(256, 3, padding='same')(x)
     x = layers.BatchNormalization()(x)
     x = layers.Activation('relu')(x)
     x = layers.SpatialDropout1D(0.3)(x)
-    x = layers.Conv1D(512, 3, padding='same')(x)
+    x = layers.Conv1D(256, 3, padding='same')(x)
     x = layers.BatchNormalization()(x)
-    x = layers.Add()([res, x]) # 입력 신호 보존
+    x = layers.Add()([res, x])
     x = layers.Activation('relu')(x)
     
     x = layers.MaxPooling1D(2)(x)
-    
-    # Block 2
-    x = layers.Conv1D(256, 3, padding='same', activation='relu')(x)
+    x = layers.Conv1D(128, 3, padding='same', activation='relu')(x)
     x = layers.BatchNormalization()(x)
     x = layers.GlobalAveragePooling1D()(x) 
     
-    x = layers.Dense(512, activation='relu', kernel_regularizer=regularizers.l2(0.005))(x)
+    x = layers.Dense(256, activation='relu', kernel_regularizer=regularizers.l2(0.005))(x)
     x = layers.Dropout(0.5)(x)
     outputs = layers.Dense(num_classes, activation='softmax')(x)
     
     return models.Model(inputs, outputs)
 
 # ==============================
-# 4. 학습 및 TFLite 변환
+# 5. K-Fold 학습 실행
 # ==============================
 X_raw, y_raw = load_dataset(DATA_ROOT)
 le = LabelEncoder()
@@ -154,38 +187,39 @@ skf = StratifiedKFold(n_splits=K_FOLDS, shuffle=True, random_state=42)
 global_best_acc = 0.0
 
 for fold_no, (train_idx, val_idx) in enumerate(skf.split(X_raw, y_int), 1):
+    print(f"\n🚀 --- FOLD {fold_no} / {K_FOLDS} 학습 시작 ---")
     X_train, X_val = X_raw[train_idx], X_raw[val_idx]
     y_train, y_val = y_onehot[train_idx], y_onehot[val_idx]
-    X_train, y_train = apply_3d_augmentation(X_train, y_train)
+    
+    # 훈련 데이터 증강
+    X_train_aug, y_train_aug = apply_3d_augmentation(X_train, y_train)
     
     model = build_model(num_classes)
     model.compile(optimizer=optimizers.Adam(2e-4), 
                   loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.1), 
                   metrics=['accuracy'])
     
-    ckpt = tf.keras.callbacks.ModelCheckpoint(os.path.join(MODEL_SAVE_DIR, f"fold_{fold_no}.h5"), 
-                                             save_best_only=True, monitor='val_accuracy')
-    lr_sch = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=15, min_lr=5e-5, verbose=1)
+    ckpt_path = os.path.join(MODEL_SAVE_DIR, f"fold_{fold_no}.h5")
+    callbacks = [
+        tf.keras.callbacks.ModelCheckpoint(ckpt_path, save_best_only=True, monitor='val_accuracy'),
+        tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=15, min_lr=5e-5, verbose=1),
+        FoldLogger(fold_no, (X_val, y_val), MODEL_SAVE_DIR) # CSV 로그 저장
+    ]
     
-    history = model.fit(X_train, y_train, validation_data=(X_val, y_val), 
-                        epochs=EPOCHS, batch_size=BATCH_SIZE, callbacks=[ckpt, lr_sch], verbose=1)
+    history = model.fit(X_train_aug, y_train_aug, 
+                        validation_data=(X_val, y_val), 
+                        epochs=EPOCHS, 
+                        batch_size=BATCH_SIZE, 
+                        callbacks=callbacks, 
+                        verbose=1)
     
+    # 전체 폴드 중 가장 성능 좋은 모델 저장
     if max(history.history['val_accuracy']) > global_best_acc:
         global_best_acc = max(history.history['val_accuracy'])
-        model.load_weights(os.path.join(MODEL_SAVE_DIR, f"fold_{fold_no}.h5"))
+        model.load_weights(ckpt_path)
         model.save(final_h5_path)
+        print(f"⭐ Global Best Model Updated (Fold {fold_no})")
 
-# --- [최종 단계: TFLite 변환] ---
-print("\n📦 모델 경량화 변환 시작 (TFLite Quantization)...")
-best_model = tf.keras.models.load_model(final_h5_path)
-converter = tf.lite.TFLiteConverter.from_keras_model(best_model)
-converter.optimizations = [tf.lite.Optimize.DEFAULT] # 양자화 적용
-tflite_model = converter.convert()
-
-with open(final_tflite_path, 'wb') as f:
-    f.write(tflite_model)
-
-print(f"🌟 변환 완료!")
-print(f"1️⃣ H5 모델 용량: {os.path.getsize(final_h5_path)/1024/1024:.2f} MB")
-print(f"2️⃣ TFLite 모델 용량: {os.path.getsize(final_tflite_path)/1024/1024:.2f} MB")
+print("\n--- 모든 학습 프로세스 종료 ---")
 print(f"✅ 최고 정확도: {global_best_acc:.4f}")
+print(f"📂 모델 및 로그 저장 위치: {os.path.abspath(MODEL_SAVE_DIR)}")
