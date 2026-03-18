@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .roster-container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+    
+    .roster-header { text-align: center; margin-bottom: 40px; }
+    .roster-title { font-size: 2.2rem; color: var(--text-primary); margin-bottom: 15px; }
+    .roster-subtitle { color: var(--text-secondary); font-size: 1.05rem; }
+    
+    .roster-controls { display: flex; flex-direction: column; align-items: center; gap: 20px; margin-bottom: 40px; }
+    
+    .roster-tabs { display: flex; gap: 15px; }
+    .tab-btn { padding: 12px 35px; font-size: 1.1rem; border-radius: 30px; background-color: var(--card-bg); color: var(--text-secondary); border: 2px solid var(--border-color); cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+    .tab-btn.active { background-color: var(--text-primary); color: var(--bg-color); border-color: var(--text-primary); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .tab-btn:hover:not(.active) { background-color: var(--hover-bg); border-color: var(--text-secondary); }
+    
+    .search-box { width: 100%; max-width: 500px; padding: 15px 25px; font-size: 1rem; border: 2px solid var(--border-color); border-radius: 30px; background-color: var(--card-bg); color: var(--text-primary); outline: none; transition: border-color 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+    .search-box:focus { border-color: var(--text-primary); }
+    
+    .player-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
+        gap: 30px; 
+        padding: 10px 0;
+    }
+    
+    .player-card { 
+        border-radius: 25px; 
+        overflow: hidden; 
+        border: 4px solid #ffd700; 
+        display: flex; 
+        flex-direction: column; 
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15); 
+        transition: transform 0.3s ease, box-shadow 0.3s ease; 
+        background-color: #000;
+    }
+    .player-card:hover { 
+        transform: translateY(-8px); 
+        box-shadow: 0 20px 40px rgba(0,0,0,0.25); 
+    }
+    
+    .card-visual { 
+        width: 100%; 
+        height: 260px; 
+        background-color: #000; 
+        overflow: hidden; 
+    }
+    .card-visual img { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+        object-position: center top; 
+        transition: transform 0.4s ease;
+    }
+    .player-card:hover .card-visual img {
+        transform: scale(1.05);
+    }
+    
+    .card-body { 
+        padding: 25px 25px 30px 25px; 
+        flex: 1; 
+        display: flex; 
+        flex-direction: column; 
+    }
+    .pitcher-bg { background: linear-gradient(145deg, #0a192f, #112240); }
+    .hitter-bg { background: linear-gradient(145deg, #2a0a0a, #4a0e0e); }
+    
+    .player-name { 
+        font-size: 2rem; 
+        color: #ffffff; 
+        margin-bottom: 20px; 
+        margin-top: 0; 
+        font-weight: 700;
+    }
+    .card-desc { 
+        background: rgba(255,255,255,0.07); 
+        padding: 18px; 
+        border-radius: 12px; 
+        border-left: 5px solid #ffd700; 
+        font-size: 1.05rem; 
+        line-height: 1.6; 
+        color: #ffffff;
+        margin-bottom: 0;
+        flex: 1;
+        word-break: keep-all;
+    }
+    
+    .hidden { display: none !important; }
+</style>
+
+<div class="roster-container">
+    <div class="roster-header">
+        <h1 class="roster-title">프로 선수 명단</h1>
+        <p class="roster-subtitle">데이터베이스에 등록된 전설적인 선수들의 정보를 확인하세요.</p>
+    </div>
+
+    <div class="roster-controls">
+        <div class="roster-tabs">
+            <button class="tab-btn" id="btn-pitch" onclick="filterRoster('pitch')">투수 명단</button>
+            <button class="tab-btn" id="btn-hit" onclick="filterRoster('hit')">타자 명단</button>
+        </div>
+        <input type="text" id="searchInput" class="search-box" placeholder="선수 이름을 검색해 보세요..." onkeyup="searchPlayers()">
+    </div>
+
+    <div class="player-grid" id="pitcherGrid">
+        {% for pitcher in pitchers %}
+        <div class="player-card player-item">
+            <div class="card-visual">
+                <img src="{{ url_for('static', filename='images/pitchers/' ~ pitcher.name_en ~ '.jpg') }}" alt="{{ pitcher.name_ko }}" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+            </div>
+            <div class="card-body pitcher-bg">
+                <h3 class="player-name search-target">{{ pitcher.name_ko }}</h3>
+                <div class="card-desc">"{{ pitcher.description }}"</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="player-grid hidden" id="hitterGrid">
+        {% for hitter in hitters %}
+        <div class="player-card player-item">
+            <div class="card-visual">
+                <img src="{{ url_for('static', filename='images/hitters/' ~ hitter.name_en ~ '.jpg') }}" alt="{{ hitter.name_ko }}" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+            </div>
+            <div class="card-body hitter-bg">
+                <h3 class="player-name search-target">{{ hitter.name_ko }}</h3>
+                <div class="card-desc">"{{ hitter.description }}"</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    let currentTab = 'pitch';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedTab = localStorage.getItem('rosterTab');
+        if (savedTab) {
+            filterRoster(savedTab);
+        } else {
+            filterRoster('pitch');
+        }
+    });
+
+    function filterRoster(type) {
+        currentTab = type;
+        localStorage.setItem('rosterTab', type);
+        
+        document.getElementById('btn-pitch').classList.remove('active');
+        document.getElementById('btn-hit').classList.remove('active');
+        document.getElementById('btn-' + type).classList.add('active');
+        
+        if (type === 'pitch') {
+            document.getElementById('pitcherGrid').classList.remove('hidden');
+            document.getElementById('hitterGrid').classList.add('hidden');
+        } else {
+            document.getElementById('pitcherGrid').classList.add('hidden');
+            document.getElementById('hitterGrid').classList.remove('hidden');
+        }
+        
+        searchPlayers();
+    }
+
+    function searchPlayers() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const activeGrid = currentTab === 'pitch' ? document.getElementById('pitcherGrid') : document.getElementById('hitterGrid');
+        const cards = activeGrid.querySelectorAll('.player-item');
+        
+        cards.forEach(card => {
+            const name = card.querySelector('.search-target').innerText.toLowerCase();
+            if (name.includes(query)) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+</script>
+{% endblock %}

@@ -2,98 +2,138 @@
 
 {% block content %}
 <style>
-    .battle-container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+    .battle-wrapper { padding-bottom: 60px; }
+
+    .battle-hero {
+        background: linear-gradient(135deg, #1976d2 0%, #0d47a1 50%, #b71c1c 100%);
+        padding: 70px 20px 90px 20px;
+        text-align: center;
+        border-radius: 0 0 40px 40px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        margin-bottom: -45px;
+    }
     
-    .battle-header { text-align: center; margin-bottom: 40px; }
-    .battle-title { font-size: 2.2rem; color: var(--text-primary); margin-bottom: 15px; }
-    .battle-subtitle { color: var(--text-secondary); font-size: 1.05rem; }
+    .battle-title { font-size: 2.8rem; color: #ffffff; margin-bottom: 15px; font-weight: 800; letter-spacing: 2px; }
+    .battle-subtitle { color: rgba(255, 255, 255, 0.9); font-size: 1.15rem; }
+    
+    .battle-container { max-width: 850px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 10; }
     
     .search-box {
         width: 100%;
-        padding: 18px 25px;
-        font-size: 1.1rem;
-        border: 2px solid var(--border-color);
-        border-radius: 30px;
+        padding: 22px 30px;
+        font-size: 1.15rem;
+        border: none;
+        border-radius: 35px;
         background-color: var(--card-bg);
         color: var(--text-primary);
         margin-bottom: 40px;
         outline: none;
-        transition: border-color 0.3s;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
     }
-    .search-box:focus { border-color: var(--text-primary); }
+    .search-box:focus { transform: translateY(-2px); box-shadow: 0 15px 35px rgba(0,0,0,0.12); }
     
-    .feed-list { display: flex; flex-direction: column; gap: 15px; }
+    .feed-list { display: flex; flex-direction: column; gap: 20px; }
     
     .feed-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 20px 30px;
-        border-radius: 16px;
+        padding: 25px 35px;
+        border-radius: 20px;
         background-color: var(--card-bg);
         border: 1px solid var(--border-color);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
         cursor: pointer;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
     }
+    
+    .feed-item::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; width: 8px; height: 100%;
+        transition: width 0.3s ease;
+    }
+    .item-pitch::before { background-color: #1976d2; }
+    .item-hit::before { background-color: #d32f2f; }
+    
     .feed-item:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.08);
         border-color: var(--text-secondary);
     }
     
     .feed-left { display: flex; align-items: center; gap: 25px; }
-    .feed-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-    .feed-avatar { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); }
-    .feed-name { font-size: 1rem; color: var(--text-primary); font-weight: 500; }
-    .feed-sub { font-size: 0.85rem; color: var(--text-secondary); }
     
-    .feed-score { font-size: 1.6rem; font-weight: 700; color: var(--text-primary); }
+    .avatar-group { display: flex; align-items: center; position: relative; }
+    .feed-avatar { width: 65px; height: 65px; object-fit: cover; border: 4px solid var(--card-bg); box-shadow: 0 4px 10px rgba(0,0,0,0.08); background-color: var(--hover-bg); }
+    .avatar-user { border-radius: 50%; z-index: 2; position: relative; }
+    .avatar-player { border-radius: 18px; margin-left: -20px; z-index: 1; }
+    
+    .feed-info { display: flex; flex-direction: column; gap: 5px; }
+    .feed-name { display: flex; align-items: baseline; gap: 8px; }
+    .feed-user-text { font-size: 0.95rem; color: var(--text-secondary); font-weight: 500; }
+    .feed-divider { color: var(--border-color); font-weight: 300; }
+    .feed-player-text { font-size: 1.25rem; color: var(--text-primary); font-weight: 800; }
+    .feed-time { font-size: 0.9rem; color: var(--text-secondary); }
+    
+    .feed-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+    .feed-score { font-size: 1.8rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.02em; }
     .feed-badge {
-        font-size: 0.8rem;
-        padding: 4px 10px;
-        border-radius: 12px;
-        margin-bottom: 5px;
-        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
     }
     .badge-pitch { background-color: rgba(25, 118, 210, 0.1); color: #1976d2; }
     .badge-hit { background-color: rgba(211, 47, 47, 0.1); color: #d32f2f; }
 
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background-color: rgba(0,0,0,0.5);
+        background-color: rgba(0,0,0,0.6);
         display: none; justify-content: center; align-items: center; z-index: 2000;
+        backdrop-filter: blur(5px);
     }
     .modal-content {
-        background-color: var(--card-bg); padding: 40px; border-radius: 24px;
-        text-align: center; max-width: 400px; width: 90%;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        background-color: var(--card-bg); padding: 45px 40px; border-radius: 28px;
+        text-align: center; max-width: 420px; width: 90%;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+        border: 1px solid var(--border-color);
+        animation: scaleUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    .modal-title { color: var(--text-primary); font-size: 1.4rem; margin-bottom: 30px; }
+    @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    
+    .modal-title { color: var(--text-primary); font-size: 1.5rem; margin-bottom: 35px; font-weight: 700; }
     .btn-battle {
-        display: block; width: 100%; padding: 18px; margin-bottom: 15px;
-        border-radius: 16px; border: none; font-size: 1.1rem; font-weight: 600;
-        cursor: pointer; transition: 0.2s; color: white;
+        display: block; width: 100%; padding: 20px; margin-bottom: 15px;
+        border-radius: 20px; border: none; font-size: 1.15rem; font-weight: 700;
+        cursor: pointer; transition: all 0.2s ease; color: white;
+        box-shadow: 0 6px 15px rgba(0,0,0,0.1);
     }
-    .btn-pitch { background-color: #1976d2; }
-    .btn-hit { background-color: #d32f2f; }
-    .btn-battle:hover { opacity: 0.9; transform: scale(1.02); }
+    .btn-pitch { background: linear-gradient(135deg, #1976d2, #0d47a1); }
+    .btn-hit { background: linear-gradient(135deg, #e53935, #b71c1c); }
+    .btn-battle:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
     .btn-close {
         background: transparent; border: none; color: var(--text-secondary);
-        font-size: 1rem; cursor: pointer; margin-top: 10px; text-decoration: underline;
+        font-size: 1.05rem; cursor: pointer; margin-top: 15px; text-decoration: underline;
+        padding: 10px;
     }
+    .btn-close:hover { color: var(--text-primary); }
 </style>
 
-<div class="battle-container">
-    <div class="battle-header">
+<div class="battle-wrapper">
+    <div class="battle-hero">
         <h1 class="battle-title">고스트 배틀</h1>
         <p class="battle-subtitle">다른 유저의 기록을 선택하고 나의 폼으로 도전장을 내미세요.</p>
     </div>
 
-    <input type="text" id="searchInput" class="search-box" placeholder="유저 닉네임을 검색하여 타겟을 찾아보세요...">
-
-    <div class="feed-list" id="feedList"></div>
+    <div class="battle-container">
+        <input type="text" id="searchInput" class="search-box" placeholder="유저 닉네임을 검색하여 타겟을 찾아보세요...">
+        <div class="feed-list" id="feedList"></div>
+    </div>
 </div>
 
 <div class="modal-overlay" id="battleModal">
@@ -101,7 +141,7 @@
         <h2 class="modal-title">어떤 종목으로 도전하시겠습니까?</h2>
         <button class="btn-battle btn-pitch" onclick="startBattle('pitch')">나의 투구 폼으로 도전</button>
         <button class="btn-battle btn-hit" onclick="startBattle('hit')">나의 타격 폼으로 도전</button>
-        <button class="btn-close" onclick="closeModal()">취소</button>
+        <button class="btn-close" onclick="closeModal()">취소하고 돌아가기</button>
     </div>
 </div>
 
@@ -116,7 +156,6 @@
             loadFeed(e.target.value);
         });
 
-        // 5초마다 실시간으로 피드를 업데이트합니다.
         feedPollingInterval = setInterval(() => {
             const currentQuery = document.getElementById('searchInput').value;
             loadFeed(currentQuery, true);
@@ -132,7 +171,7 @@
             
             if (data.length === 0) {
                 if (!isSilent || container.innerHTML === '') {
-                    container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 40px;">일치하는 기록이 없습니다.</div>';
+                    container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 60px; background: var(--card-bg); border-radius: 20px; border: 1px dashed var(--border-color); font-size: 1.1rem;">일치하는 기록이 없습니다.</div>';
                 }
                 return;
             }
@@ -140,26 +179,31 @@
             const tempDiv = document.createElement('div');
             data.forEach(item => {
                 const badgeClass = item.type === 'pitch' ? 'badge-pitch' : 'badge-hit';
+                const itemClass = item.type === 'pitch' ? 'item-pitch' : 'item-hit';
                 const badgeText = item.type === 'pitch' ? '투구 기록' : '타격 기록';
                 
                 const div = document.createElement('div');
-                div.className = 'feed-item';
+                div.className = `feed-item ${itemClass}`;
                 div.onclick = () => openModal(item.analysis_id);
                 
                 div.innerHTML = `
                     <div class="feed-left">
-                        <div class="feed-col">
-                            <img src="/static/uploads/profiles/${item.profile_image}" class="feed-avatar" onerror="this.src='/static/images/default_logo.png'">
-                            <span class="feed-name">${item.nickname}</span>
+                        <div class="avatar-group">
+                            <img src="/static/uploads/profiles/${item.profile_image}" class="feed-avatar avatar-user" onerror="this.src='/static/images/default_logo.png'">
+                            <img src="${item.player_image}" class="feed-avatar avatar-player" onerror="this.src='/static/images/default_logo.png'">
                         </div>
-                        <div class="feed-col">
-                            <img src="${item.player_image}" class="feed-avatar" style="border-radius: 12px;" onerror="this.src='/static/images/default_logo.png'">
-                            <span class="feed-sub">${item.player_name}</span>
+                        <div class="feed-info">
+                            <div class="feed-name">
+                                <span class="feed-user-text">${item.nickname}</span>
+                                <span class="feed-divider">-</span>
+                                <span class="feed-player-text">${item.player_name}</span>
+                            </div>
+                            <div class="feed-time">${item.time}</div>
                         </div>
                     </div>
-                    <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                    <div class="feed-right">
                         <span class="feed-badge ${badgeClass}">${badgeText}</span>
-                        <span class="feed-score">${item.score}%</span>
+                        <span class="feed-score">${item.score}<span style="font-size: 1.2rem; color: var(--text-secondary); margin-left: 2px;">%</span></span>
                     </div>
                 `;
                 tempDiv.appendChild(div);

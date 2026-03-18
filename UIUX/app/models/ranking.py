@@ -5,6 +5,18 @@ from app import db
 from datetime import datetime
 
 class PitcherRanking(db.Model):
+    """
+    사용자의 투구 폼 분석 결과 중 최고 점수를 기록하는 모델입니다.
+    
+    Attributes:
+        id (int)              : 랭킹 기록의 고유 식별자 (PK)
+        user_id (int)         : 랭킹에 등록된 사용자의 식별자 (FK)
+        pitcher_id (int)      : 매칭된 투수의 식별자 (FK)
+        score (float)         : 기록된 최고 유사도 점수
+        recorded_at (datetime): 랭킹이 기록되거나 마지막으로 갱신된 시간
+        user (relationship)   : 해당 랭킹을 기록한 사용자 연관 객체
+        pitcher (relationship): 매칭된 투수 연관 객체
+    """
     __tablename__ = 'pitcher_rankings'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -17,6 +29,18 @@ class PitcherRanking(db.Model):
     pitcher = db.relationship('Pitcher')
 
 class HitterRanking(db.Model):
+    """
+    사용자의 타격 폼 분석 결과 중 최고 점수를 기록하는 모델입니다.
+    
+    Attributes:
+        id (int)              : 랭킹 기록의 고유 식별자 (PK)
+        user_id (int)         : 랭킹에 등록된 사용자의 식별자 (FK)
+        hitter_id (int)       : 매칭된 타자의 식별자 (FK)
+        score (float)         : 기록된 최고 유사도 점수
+        recorded_at (datetime): 랭킹이 기록되거나 마지막으로 갱신된 시간
+        user (relationship)   : 해당 랭킹을 기록한 사용자 연관 객체
+        hitter (relationship) : 매칭된 타자 연관 객체
+    """
     __tablename__ = 'hitter_rankings'
     
     id = db.Column(db.Integer, primary_key=True)
