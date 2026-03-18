@@ -28,7 +28,6 @@
         background-color: var(--card-bg);
     }
 
-    /* 백엔드 조건에 따른 프로필 프레임 색상 */
     .frame-gold { border: 5px solid #FFD700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); }
     .frame-blue { border: 5px solid #1976d2; box-shadow: 0 0 15px rgba(25, 118, 210, 0.3); }
     .frame-red { border: 5px solid #d32f2f; box-shadow: 0 0 15px rgba(211, 47, 47, 0.3); }
@@ -90,7 +89,6 @@
         transform: translateY(-2px);
     }
     
-    /* 분석 종류에 따른 테두리 색상 */
     .pitch-record { border: 2px solid #1976d2; }
     .hit-record { border: 2px solid #d32f2f; }
     
@@ -184,8 +182,14 @@
                 </div>
                 {% endfor %}
             {% else %}
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px; background: var(--card-bg); border-radius: 16px; border: 1px dashed var(--border-color);">
-                    아직 분석 기록이 없습니다. 지금 바로 폼을 분석해 보세요!
+                <div style="text-align: center; padding: 60px 20px; background: var(--card-bg); border-radius: 24px; border: 1px dashed var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">⚾</div>
+                    <h4 style="color: var(--text-primary); font-size: 1.2rem; margin-bottom: 10px; margin-top: 0;">아직 분석 기록이 없습니다.</h4>
+                    <p style="color: var(--text-secondary); margin-bottom: 25px;">나의 투구 폼이나 타격 폼이 어떤 프로 선수와 닮았는지 지금 바로 확인해 보세요!</p>
+                    <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                        <a href="{{ url_for('main.upload_pitch') }}" class="btn-edit" style="background-color: #1976d2; color: white; border: none;">투구 폼 분석하기</a>
+                        <a href="{{ url_for('main.upload_hit') }}" class="btn-edit" style="background-color: #d32f2f; color: white; border: none;">타격 폼 분석하기</a>
+                    </div>
                 </div>
             {% endif %}
         </div>

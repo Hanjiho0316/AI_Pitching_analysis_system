@@ -1,6 +1,7 @@
 """
-웹사이트의 화면 렌더링을 담당하는 메인 라우터입니다.
-페이지 이동 및 분석 완료 후 결과 화면을 구성하기 위한 데이터를 템플릿에 전달합니다.
+웹사이트의 화면 렌더링을 담당하는 메인 라우터 모듈입니다.
+페이지 이동 및 분석 완료 후 결과 화면을 구성하기 위한 
+데이터를 조회하여 템플릿에 전달합니다.
 """
 import os
 from flask import Blueprint, render_template, request, redirect, url_for, current_app, flash
@@ -8,6 +9,7 @@ from flask_login import login_required
 from app.services.ml_service import get_task_status
 from app.models.analysis import Analysis
 from app.models.pitcher import Pitcher 
+from app.models.hitter import Hitter
 from app.models.ranking import PitcherRanking, HitterRanking
 from app.models.user import User
 
@@ -17,31 +19,48 @@ main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def index():
-    """메인 화면을 렌더링합니다."""
+    """
+    서비스의 메인 화면을 렌더링합니다.
+    투구 폼 분석과 타격 폼 분석으로 이동할 수 있는 분할 메뉴를 제공합니다.
+    """
     return render_template('index.html')
 
 
 @main_bp.route('/upload_pitch')
 def upload_pitch():
-    """투구 영상 업로드 화면을 렌더링합니다."""
+    """
+    투구 영상 업로드 화면을 렌더링합니다.
+    촬영 가이드와 파일 업로드 폼을 제공합니다.
+    """
     return render_template('upload_pitch.html')
 
 
 @main_bp.route('/upload_hit')
 def upload_hit():
-    """타격 영상 업로드 화면을 렌더링합니다."""
-    return render_template('upload_hit.html')
+   """
+    타격 영상 업로드 화면을 렌더링합니다.
+    촬영 가이드와 파일 업로드 폼을 제공합니다.
+    """
+   return render_template('upload_hit.html')
 
 
 @main_bp.route('/battle')
 def battle():
-    """고스트 대결 메인 화면을 렌더링합니다."""
+    """
+    고스트 대결 메인 화면을 렌더링합니다.
+    실시간으로 업데이트되는 다른 유저의 분석 기록 피드와 검색창을 제공합니다.
+    """
     return render_template('battle.html')
 
 
 @main_bp.route('/result_pitch')
 def result_pitch():
-    """투구 폼 분석 결과 화면을 렌더링합니다."""
+    """
+    투구 폼 분석 결과 화면을 렌더링합니다.
+    
+    URL 매개변수로 전달된 task_id를 통해 백그라운드 분석 결과를 조회하고,
+    유사도 점수에 따라 성공 또는 실패(failure.html) 화면으로 분기합니다.
+    """
     task_id = request.args.get('task_id')
     
     if not task_id:
@@ -84,7 +103,12 @@ def result_pitch():
 
 @main_bp.route('/result_hit')
 def result_hit():
-    """타격 폼 분석 결과 화면을 렌더링합니다."""
+    """
+    타격 폼 분석 결과 화면을 렌더링합니다.
+    
+    URL 매개변수로 전달된 task_id를 통해 백그라운드 분석 결과를 조회하고,
+    유사도 점수에 따라 성공 또는 실패 화면으로 분기합니다.
+    """
     task_id = request.args.get('task_id')
     
     if not task_id:
@@ -128,7 +152,12 @@ def result_hit():
 
 @main_bp.route('/result_battle')
 def result_battle():
-    """대결 결과를 판정하고 전용 결과 화면을 렌더링합니다."""
+    """
+    고스트 대결 모드의 판정 결과를 연산하고 전용 결과 화면을 렌더링합니다.
+    
+    URL 매개변수로 전달된 본인의 task_id와 상대방의 target_id를 비교하여
+    WIN, LOSE, DRAW 상태를 결정하고 양측의 선수 이미지 정보를 가공하여 전달합니다.
+    """
     task_id = request.args.get('task_id')
     target_id = request.args.get('target_id')
     
@@ -142,14 +171,11 @@ def result_battle():
     if task_info['status'] != 'completed':
         flash('분석이 아직 완료되지 않았습니다.')
         return redirect(url_for('main.index'))
-    
-    # 내 분석 결과 파싱
+
     my_result = task_info['result']
     my_score = my_result['similarity']
     my_type = task_info.get('analysis_type', 'pitch')
     
-    # 상대방 분석 기록 조회
-    from app.models.analysis import Analysis
     target_record = Analysis.query.get(target_id)
     
     if not target_record:
@@ -157,8 +183,7 @@ def result_battle():
         return redirect(url_for('main.battle'))
         
     target_score = target_record.similarity
-    
-    # 승패 판정
+
     if my_score > target_score:
         match_result = "WIN"
     elif my_score < target_score:
@@ -166,7 +191,6 @@ def result_battle():
     else:
         match_result = "DRAW"
         
-    # 상대방 선수 이미지 및 이름 정보 가공
     if target_record.analysis_type == 'pitch' and target_record.pitcher:
         target_player_name = target_record.pitcher.name_ko
         target_player_img = f"pitchers/{target_record.pitcher.name_en}.jpg"
@@ -177,13 +201,10 @@ def result_battle():
         target_player_name = "알 수 없음"
         target_player_img = "default_logo.png"
         
-    # 내 선수 이미지 및 이름 정보 가공
     if my_type == 'hit':
-        from app.models.hitter import Hitter
         my_player = Hitter.query.filter_by(model_label=my_result['player_img']).first()
         my_folder = 'hitters'
     else:
-        from app.models.pitcher import Pitcher
         my_player = Pitcher.query.filter_by(model_label=my_result['player_img']).first()
         my_folder = 'pitchers'
         
@@ -198,19 +219,28 @@ def result_battle():
 
 @main_bp.route('/ranking')
 def ranking():
-    """AJAX 기반 단일 랭킹 화면의 틀을 렌더링합니다."""
+    """
+    전체 랭킹 화면의 틀을 렌더링합니다.
+    실제 랭킹 데이터는 프론트엔드에서 AJAX를 통해 동적으로 로드됩니다.
+    """
     return render_template('ranking.html')
 
 
 @main_bp.route('/mypage/<nickname>')
 def mypage(nickname):
-    """마이페이지 화면을 렌더링하고 사용자 분석 기록을 조회합니다."""
+    """
+    마이페이지 화면을 렌더링하고 사용자의 개인 분석 기록을 조회합니다.
+    
+    Args:
+        nickname (str): 조회할 사용자의 닉네임
+        
+    Returns:
+        조회된 사용자 정보, 누적 분석 리스트, 종목별 최고 점수를 포함한 템플릿
+    """
     user = User.query.filter_by(nickname=nickname).first_or_404()
     
-    from app.models.analysis import Analysis
     analyses = Analysis.query.filter_by(user_id=user.id).order_by(Analysis.created_at.desc()).all()
     
-    from app.models.ranking import PitcherRanking, HitterRanking
     best_pitch_record = PitcherRanking.query.filter_by(user_id=user.id).order_by(PitcherRanking.score.desc()).first()
     best_hit_record = HitterRanking.query.filter_by(user_id=user.id).order_by(HitterRanking.score.desc()).first()
     
@@ -223,5 +253,37 @@ def mypage(nickname):
 @main_bp.route('/settings')
 @login_required
 def settings():
-    """사용자 환경설정 화면을 렌더링합니다."""
+    """
+    사용자 환경설정 화면을 렌더링합니다.
+    """
     return render_template('settings.html')
+
+
+@main_bp.route('/roster')
+def roster():
+    """
+    프로 선수 명단 화면을 렌더링합니다.
+    데이터베이스에 저장된 투수와 타자 목록을 
+    한글 이름(가나다) 순으로 정렬하고
+    중복된 선수를 필터링하여 템플릿에 전달합니다.
+    """
+    pitchers_raw = Pitcher.query.order_by(Pitcher.name_ko.asc()).all()
+    from app.models.hitter import Hitter
+    hitters_raw = Hitter.query.order_by(Hitter.name_ko.asc()).all()
+
+    seen_pitchers = set()
+    pitchers = []
+    for p in pitchers_raw:
+        if p.name_ko not in seen_pitchers:
+            seen_pitchers.add(p.name_ko)
+            pitchers.append(p)
+
+    # 타자 명단 중복 제거 (이름 기준)
+    seen_hitters = set()
+    hitters = []
+    for h in hitters_raw:
+        if h.name_ko not in seen_hitters:
+            seen_hitters.add(h.name_ko)
+            hitters.append(h)
+
+    return render_template('roster.html', pitchers=pitchers, hitters=hitters)
