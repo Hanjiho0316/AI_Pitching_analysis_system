@@ -37,7 +37,16 @@ task_store = {}
 
 
 def calibrate_score(raw_score, c=10):
-    """모델의 원시 정확도(0~100)를 로그 스케일로 보정"""
+    """
+    모델이 반환한 원시 정확도(0~100)를 로그 스케일을 적용하여 현실적인 유사도 점수로 보정합니다.
+    
+    Args:
+        raw_score (float): 딥러닝 모델이 예측한 특정 클래스에 대한 원시 확률 값
+        c (int): 로그 스케일 곡선의 형태를 조절하는 상수 (기본값: 10)
+        
+    Returns:
+        float: 0.0에서 100.0 사이로 보정된 소수점 둘째 자리까지의 최종 유사도 점수
+    """
     if raw_score <= 0:
         return 0.0
     if raw_score >= 100:
@@ -48,7 +57,15 @@ def calibrate_score(raw_score, c=10):
 
 
 def get_detailed_analysis_yolo(df):
-    """추출된 YOLO 관절 데이터를 바탕으로 물리적 수치 계산"""
+    """
+    추출된 YOLO 관절 좌표 데이터프레임을 바탕으로 사용자의 물리적 투구 수치를 계산합니다.
+    
+    Args:
+        df (pd.DataFrame): 프레임별 관절 좌표(x, y, conf)가 포함된 데이터프레임
+        
+    Returns:
+        dict: 어깨 기울기(tilt), 릴리스 포인트 높이(height), 보폭(stride)을 포함하는 딕셔너리
+    """
     if df.empty:
         return {"tilt": 0, "height": 0, "stride": 0}
     
@@ -62,7 +79,17 @@ def get_detailed_analysis_yolo(df):
 
 
 def preprocess_pitch_data(df):
-    """[투수 전용] 좌표 데이터를 보간, 스무딩 후 패딩 및 정규화합니다."""
+    """
+    [투수 전용] 추출된 관절 좌표 데이터를 모델 입력 규격에 맞게 전처리합니다.
+    골반 중심을 기준으로 좌표를 정규화하고, 프레임 간 변화량(델타)을 계산하며, 
+    최대 프레임 수(MAX_FRAMES)에 맞추어 제로 패딩(Zero-Padding)을 수행합니다.
+    
+    Args:
+        df (pd.DataFrame): 결측치 보간 및 스무딩이 완료된 관절 좌표 데이터프레임
+        
+    Returns:
+        np.ndarray: 모델 입력용으로 변환된 (1, MAX_FRAMES, NUM_JOINTS, 4) 형태의 텐서 배열
+    """
     x_cols    = [f"{n}_x" for n in JOINT_NAMES]
     y_cols    = [f"{n}_y" for n in JOINT_NAMES]
     conf_cols = [f"{n}_conf" for n in JOINT_NAMES]
@@ -70,18 +97,15 @@ def preprocess_pitch_data(df):
     coords = np.stack([df[x_cols].values, df[y_cols].values], axis=-1)
     conf   = df[conf_cols].values
 
-    # 골반 중심 정규화
     hip_center = (coords[:, 7, :] + coords[:, 8, :]) / 2
     for f in range(coords.shape[0]):
         coords[f] -= hip_center[f]
 
-    # 변화량(델타) 및 신뢰도 가중치 적용
     deltas = np.diff(coords, axis=0, prepend=coords[0:1])
     deltas *= np.expand_dims(conf, axis=-1)
 
     combined = np.concatenate([coords, deltas], axis=-1)
 
-    # 제로 패딩 (Zero-Padding)
     if len(combined) > MAX_FRAMES:
         combined = combined[:MAX_FRAMES]
     else:
@@ -91,8 +115,19 @@ def preprocess_pitch_data(df):
     return np.expand_dims(combined.astype('float32'), axis=0)
 
 
-def preprocess_hit_data(frames_data):
-    """[타자 전용] 타자 분석을 위한 좌표 데이터를 패딩 및 정규화합니다."""
+def preprocess_hit_data(frames_data, handedness='right'):
+    """
+    [타자 전용] 타격 분석을 위한 관절 좌표 데이터를 전처리합니다.
+    좌타자인 경우 좌우 반전을 수행하고, 골반 너비를 기반으로 가상의 Z축을 연산하여 
+    3D 좌표계를 구성한 뒤 제로 패딩을 적용합니다.
+    
+    Args:
+        frames_data (list): 프레임별 관절 좌표 및 신뢰도가 담긴 1차원 리스트의 모음
+        handedness (str): 사용자의 타석 위치 ('right' 또는 'left')
+        
+    Returns:
+        np.ndarray: 모델 입력용으로 변환된 (1, MAX_FRAMES, NUM_JOINTS, 6) 형태의 텐서 배열
+    """
     df = pd.DataFrame(frames_data)
     
     x_cols = [i*3 for i in range(NUM_JOINTS)]
@@ -102,25 +137,21 @@ def preprocess_hit_data(frames_data):
     coords_2d = np.stack([df.iloc[:, x_cols].values, df.iloc[:, y_cols].values], axis=-1)
     conf = df.iloc[:, conf_cols].values
     
-    # 가상 Z축 연산
     hip_l, hip_r = coords_2d[:, 7, :], coords_2d[:, 8, :]
     hip_widths = np.linalg.norm(hip_l - hip_r, axis=1)
     avg_width = np.mean(hip_widths) if np.mean(hip_widths) > 0 else 0.1
     z_pseudo = avg_width / (hip_widths + 1e-6)
     z_pseudo = np.tile(z_pseudo[:, np.newaxis, np.newaxis], (1, NUM_JOINTS, 1))
     
-    # 3D 좌표 구성 및 정규화
     coords_3d = np.concatenate([coords_2d, z_pseudo], axis=-1)
     hip_center = (coords_3d[:, 7, :] + coords_3d[:, 8, :]) / 2
     for f in range(coords_3d.shape[0]):
         coords_3d[f] -= hip_center[f]
         
-    # 변화량 및 신뢰도 가중치
     deltas_3d = np.diff(coords_3d, axis=0, prepend=coords_3d[0:1, :, :])
     conf_exp = np.expand_dims(conf, axis=-1)
     combined = np.concatenate([coords_3d * conf_exp, deltas_3d * conf_exp], axis=-1)
     
-    # Zero-Padding
     current_len = len(combined)
     if current_len < MAX_FRAMES:
         pad = np.zeros((MAX_FRAMES - current_len, NUM_JOINTS, 6))
@@ -132,65 +163,48 @@ def preprocess_hit_data(frames_data):
 
 
 def swap_lr_joints_df(df):
-    """판다스 데이터프레임의 L(좌)와 R(우) 관절 좌표 및 신뢰도를 교체합니다."""
+    """
+    판다스 데이터프레임 내의 좌측(L)과 우측(R) 관절 좌표 및 신뢰도 컬럼의 값을 서로 교체합니다.
+    좌투수 및 좌타자 영상을 우수자 기준으로 학습된 모델에 입력하기 위해 전처리 과정에서 사용됩니다.
+    
+    Args:
+        df (pd.DataFrame): 원본 관절 좌표 데이터프레임
+        
+    Returns:
+        pd.DataFrame: 좌우 관절 데이터가 교체된 새로운 데이터프레임
+    """
     temp_df = df.copy()
     body_parts = ['SHOULDER', 'ELBOW', 'WRIST', 'HIP', 'KNEE', 'ANKLE']
+
     for part in body_parts:
         for suffix in ['_x', '_y', '_conf']:
             l_col = f"L_{part}{suffix}"
             r_col = f"R_{part}{suffix}"
+
             if l_col in df.columns and r_col in df.columns:
                 df[l_col] = temp_df[r_col]
                 df[r_col] = temp_df[l_col]
+
     return df
 
 
-def preprocess_hit_data(frames_data, handedness='right'):
-    """[타자 전용] 타자 분석을 위한 좌표 데이터를 패딩 및 정규화합니다. (좌타자 반전 처리 포함)"""
-    df = pd.DataFrame(frames_data)
-    
-    if handedness == 'left':
-        temp_df = df.copy()
-        pairs = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10), (11, 12)]
-        for l_idx, r_idx in pairs:
-            for offset in range(3):
-                df.iloc[:, l_idx*3 + offset] = temp_df.iloc[:, r_idx*3 + offset]
-                df.iloc[:, r_idx*3 + offset] = temp_df.iloc[:, l_idx*3 + offset]
-                
-    x_cols = [i*3 for i in range(NUM_JOINTS)]
-    y_cols = [i*3 + 1 for i in range(NUM_JOINTS)]
-    conf_cols = [i*3 + 2 for i in range(NUM_JOINTS)]
-    
-    coords_2d = np.stack([df.iloc[:, x_cols].values, df.iloc[:, y_cols].values], axis=-1)
-    conf = df.iloc[:, conf_cols].values
-    
-    hip_l, hip_r = coords_2d[:, 7, :], coords_2d[:, 8, :]
-    hip_widths = np.linalg.norm(hip_l - hip_r, axis=1)
-    avg_width = np.mean(hip_widths) if np.mean(hip_widths) > 0 else 0.1
-    z_pseudo = avg_width / (hip_widths + 1e-6)
-    z_pseudo = np.tile(z_pseudo[:, np.newaxis, np.newaxis], (1, NUM_JOINTS, 1))
-    
-    coords_3d = np.concatenate([coords_2d, z_pseudo], axis=-1)
-    hip_center = (coords_3d[:, 7, :] + coords_3d[:, 8, :]) / 2
-    for f in range(coords_3d.shape[0]):
-        coords_3d[f] -= hip_center[f]
-        
-    deltas_3d = np.diff(coords_3d, axis=0, prepend=coords_3d[0:1, :, :])
-    conf_exp = np.expand_dims(conf, axis=-1)
-    combined = np.concatenate([coords_3d * conf_exp, deltas_3d * conf_exp], axis=-1)
-    
-    current_len = len(combined)
-    if current_len < MAX_FRAMES:
-        pad = np.zeros((MAX_FRAMES - current_len, NUM_JOINTS, 6))
-        combined = np.vstack([combined, pad])
-    else:
-        combined = combined[-MAX_FRAMES:]
-        
-    return np.expand_dims(combined.astype('float32'), axis=0)
-
-
 def process_video_background(task_id, filepath, ml_model_path, encoder_path, yolo_path, app, user_id, analysis_type='pitch', handedness='right'):
-    """백그라운드 비디오 분석 로직 (좌우반전 적용)"""
+    """
+    백그라운드 스레드에서 비동기로 실행되는 비디오 분석 핵심 로직입니다.
+    OpenCV와 YOLOv8 Pose를 통해 관절을 추출하고, 전처리를 거쳐 딥러닝 모델로 유사도를 예측한 뒤 
+    결과를 데이터베이스에 안전하게 저장합니다.
+    
+    Args:
+        task_id (str): 현재 분석 작업의 고유 식별자
+        filepath (str): 분석할 비디오 파일의 서버 내 로컬 경로
+        ml_model_path (str): 예측을 수행할 TensorFlow 모델 파일 경로
+        encoder_path (str): 클래스 인덱스를 이름으로 변환할 LabelEncoder 파일 경로
+        yolo_path (str): 관절 추출에 사용할 YOLO 모델 파일 경로
+        app (Flask): 데이터베이스 컨텍스트 접근을 위한 Flask 앱 인스턴스
+        user_id (int): 분석을 요청한 사용자의 식별자 (비회원인 경우 None)
+        analysis_type (str): 분석 종목 ('pitch' 또는 'hit')
+        handedness (str): 사용자의 주사용 손 ('right' 또는 'left')
+    """
     try:
         task_store[task_id]['status'] = 'processing'
         
@@ -416,7 +430,22 @@ def process_video_background(task_id, filepath, ml_model_path, encoder_path, yol
 
 
 def start_analysis_task(filepath, ml_model_path, encoder_path, yolo_path, app, user_id, analysis_type='pitch', handedness='right'):
-    """작업 시작 시 handedness 파라미터를 추가로 전달합니다."""
+    """
+    새로운 비전 분석 작업을 초기화하고 백그라운드 분석 스레드를 시작합니다.
+    
+    Args:
+        filepath (str): 업로드된 비디오 파일 경로
+        ml_model_path (str): 사용할 TensorFlow 모델 경로
+        encoder_path (str): 사용할 LabelEncoder 경로
+        yolo_path (str): 사용할 YOLO 모델 경로
+        app (Flask): Flask 어플리케이션 인스턴스
+        user_id (int): 요청 사용자 ID
+        analysis_type (str): 분석 타입 ('pitch' 또는 'hit')
+        handedness (str): 좌우 방향 설정 ('right' 또는 'left')
+        
+    Returns:
+        str: 생성된 비동기 작업의 고유 식별자 (task_id)
+    """
     task_id = str(uuid.uuid4())
     task_store[task_id] = {
         'status': 'pending',
@@ -437,4 +466,13 @@ def start_analysis_task(filepath, ml_model_path, encoder_path, yolo_path, app, u
 
 
 def get_task_status(task_id):
+    """
+    메모리(task_store)에 임시로 저장된 특정 작업의 현재 진행 상태와 분석 결과를 조회합니다.
+    
+    Args:
+        task_id (str): 조회할 작업의 고유 식별자
+        
+    Returns:
+        dict: 작업의 현재 상태('pending', 'processing', 'completed', 'error')와 결과 데이터가 담긴 딕셔너리
+    """
     return task_store.get(task_id, {'status': 'not_found'})

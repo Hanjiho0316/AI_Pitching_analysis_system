@@ -1,3 +1,7 @@
+"""
+비교 대상이 되는 프로 야구 타자들의 정보를 저장하는 모델 파일입니다.
+모델의 출력값(label)과 실제 선수 정보를 매핑하는 역할을 수행합니다.
+"""
 from app import db
 from datetime import datetime
 

@@ -97,8 +97,8 @@
 
     <div class="roster-controls">
         <div class="roster-tabs">
-            <button class="tab-btn active" onclick="filterRoster('pitch')">투수 명단</button>
-            <button class="tab-btn" onclick="filterRoster('hit')">타자 명단</button>
+            <button class="tab-btn" id="btn-pitch" onclick="filterRoster('pitch')">투수 명단</button>
+            <button class="tab-btn" id="btn-hit" onclick="filterRoster('hit')">타자 명단</button>
         </div>
         <input type="text" id="searchInput" class="search-box" placeholder="선수 이름을 검색해 보세요..." onkeyup="searchPlayers()">
     </div>
@@ -135,11 +135,22 @@
 <script>
     let currentTab = 'pitch';
 
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedTab = localStorage.getItem('rosterTab');
+        if (savedTab) {
+            filterRoster(savedTab);
+        } else {
+            filterRoster('pitch');
+        }
+    });
+
     function filterRoster(type) {
         currentTab = type;
+        localStorage.setItem('rosterTab', type);
         
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
+        document.getElementById('btn-pitch').classList.remove('active');
+        document.getElementById('btn-hit').classList.remove('active');
+        document.getElementById('btn-' + type).classList.add('active');
         
         if (type === 'pitch') {
             document.getElementById('pitcherGrid').classList.remove('hidden');
