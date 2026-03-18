@@ -124,7 +124,7 @@ AI Pitching Analysis System에서 사용하는 딥러닝 모델은 프로 선수
 AI 모델을 사용자에게 제공하기 위한 Flask 기반의 웹 어플리케이션 영역입니다. 비동기 처리와 반응형 UI를 통해 쾌적한 분석 경험을 제공합니다.
 
 ## 시스템 아키텍처
-![시스템 아키텍처](imgs/pitchtypes.drawio.jpg)
+![시스템 아키텍처](imgs/pitchtypes.drawio.png)
 
 ## 웹 어플리케이션 디렉토리 구조
 유지보수와 확장성을 고려하여 라우터, 모델, 서비스 로직을 분리한 구조로 설계했습니다.
