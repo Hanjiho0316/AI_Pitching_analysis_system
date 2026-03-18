@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<main class="main-container">
+    <div style="text-align: center; max-width: 500px; padding: 4rem 2rem; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px;">
+        <h2 style="font-size: 2rem; margin-bottom: 1.5rem; color: var(--text-primary);">분석 실패</h2>
+        <p style="color: var(--text-secondary); font-size: 1.1rem; line-height: 1.6; margin-bottom: 3rem;">
+            제공해주신 영상에서 일치하는 프로 선수의 투구 폼을 찾지 못했습니다.<br>
+            유사도가 너무 낮아 신뢰할 수 없는 결과입니다. 전신이 더 명확하게 보이는 영상으로 다시 시도해 주세요.
+        </p>
+        <a href="{{ url_for('main.upload') }}" class="submit-button" style="display: inline-block; text-decoration: none; width: 100%;">
+            다른 영상으로 다시 분석하기
+        </a>
+    </div>
+</main>
+{% endblock %}

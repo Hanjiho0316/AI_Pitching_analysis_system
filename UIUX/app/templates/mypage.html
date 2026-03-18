@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .mypage-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
+    .profile-section {
+        background-color: var(--hover-bg);
+        border-radius: 24px;
+        padding: 50px 40px;
+        display: flex;
+        align-items: center;
+        gap: 40px;
+        margin-bottom: 50px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    }
+    
+    .profile-img {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        object-fit: cover;
+        object-position: center;
+        background-color: var(--card-bg);
+    }
+
+    .frame-gold { border: 5px solid #FFD700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); }
+    .frame-blue { border: 5px solid #1976d2; box-shadow: 0 0 15px rgba(25, 118, 210, 0.3); }
+    .frame-red { border: 5px solid #d32f2f; box-shadow: 0 0 15px rgba(211, 47, 47, 0.3); }
+    .frame-grey { border: 5px solid var(--divider-color); }
+
+    .profile-info h2 {
+        font-size: 2rem;
+        color: var(--text-primary);
+        margin-bottom: 10px;
+    }
+    .profile-info p {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        margin-bottom: 25px;
+    }
+    .best-score-text {
+        font-weight: 700;
+    }
+    
+    .btn-edit {
+        display: inline-block;
+        padding: 12px 24px;
+        background-color: var(--button-bg);
+        color: var(--button-text);
+        border-radius: 50px;
+        text-decoration: none;
+        font-size: 1rem;
+        transition: 0.3s;
+    }
+    .btn-edit:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+    }
+    
+    .history-section h3 {
+        font-size: 1.4rem;
+        color: var(--text-primary);
+        margin-bottom: 25px;
+        padding-left: 10px;
+        border-left: 4px solid var(--text-primary);
+    }
+    
+    .history-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    .history-item {
+        background-color: var(--card-bg);
+        border-radius: 16px;
+        padding: 20px 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        transition: transform 0.2s ease;
+    }
+    .history-item:hover {
+        transform: translateY(-2px);
+    }
+    
+    .pitch-record { border: 2px solid #1976d2; }
+    .hit-record { border: 2px solid #d32f2f; }
+    
+    .history-left {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    .history-pitcher-img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1px solid var(--border-color);
+    }
+    .history-details h4 {
+        color: var(--text-primary);
+        font-size: 1.1rem;
+        margin-bottom: 5px;
+    }
+    .history-details p {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    .history-score {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    @media (max-width: 600px) {
+        .profile-section { flex-direction: column; text-align: center; gap: 20px; padding: 30px 20px; }
+        .history-item { flex-direction: column; align-items: flex-start; gap: 15px; }
+        .history-score { align-self: flex-end; }
+    }
+</style>
+
+<div class="mypage-container">
+    <div class="profile-section">
+        {% set profile_class = 'frame-grey' %}
+        {% if best_pitch >= 80 and best_hit >= 80 %}
+            {% set profile_class = 'frame-gold' %}
+        {% elif best_pitch > best_hit %}
+            {% set profile_class = 'frame-blue' %}
+        {% elif best_hit > best_pitch %}
+            {% set profile_class = 'frame-red' %}
+        {% elif best_pitch > 0 and best_pitch == best_hit %}
+            {% set profile_class = 'frame-blue' %}
+        {% endif %}
+
+        <img src="{{ url_for('static', filename='uploads/profiles/' ~ user.profile_image) }}" alt="Profile Image" class="profile-img {{ profile_class }}" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+        <div class="profile-info">
+            <h2>{{ user.nickname }}</h2>
+            <p>투구 최고 기록: <span class="best-score-text" style="color: #1976d2;">{{ best_pitch }}%</span> | 타격 최고 기록: <span class="best-score-text" style="color: #d32f2f;">{{ best_hit }}%</span></p>
+            
+            {% if current_user.nickname == user.nickname %}
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <a href="{{ url_for('auth.edit_profile') }}" class="btn-edit">프로필 및 설정 수정</a>
+                <a href="{{ url_for('auth.logout') }}" class="btn-edit" style="background-color: transparent; color: var(--danger-color); border: 1px solid var(--danger-color);">로그아웃</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="history-section">
+        <h3>최근 분석 기록</h3>
+        <div class="history-list">
+            {% if analyses %}
+                {% for analysis in analyses %}
+                <div class="history-item {% if analysis.analysis_type == 'pitch' %}pitch-record{% else %}hit-record{% endif %}" 
+                     {% if analysis.result_image_path %}onclick="showCard('{{ url_for('static', filename='results/' ~ analysis.result_image_path) }}')"{% endif %} 
+                     style="cursor: pointer;">
+                    <div class="history-left">
+                        {% if analysis.analysis_type == 'pitch' %}
+                            <img src="{{ url_for('static', filename='images/pitchers/' ~ analysis.pitcher.name_en ~ '.jpg') }}" class="history-pitcher-img" alt="Pitcher" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+                            <div class="history-details">
+                                <h4>{{ analysis.pitcher.name_ko }} (투수)</h4>
+                                <p>{{ analysis.created_at.strftime('%Y년 %m월 %d일 %H:%M') }}</p>
+                            </div>
+                        {% else %}
+                            <img src="{{ url_for('static', filename='images/hitters/' ~ analysis.hitter.name_en ~ '.jpg') }}" class="history-pitcher-img" alt="Hitter" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+                            <div class="history-details">
+                                <h4>{{ analysis.hitter.name_ko }} (타자)</h4>
+                                <p>{{ analysis.created_at.strftime('%Y년 %m월 %d일 %H:%M') }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="history-score">
+                        {{ analysis.similarity }}%
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align: center; padding: 60px 20px; background: var(--card-bg); border-radius: 24px; border: 1px dashed var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">⚾</div>
+                    <h4 style="color: var(--text-primary); font-size: 1.2rem; margin-bottom: 10px; margin-top: 0;">아직 분석 기록이 없습니다.</h4>
+                    <p style="color: var(--text-secondary); margin-bottom: 25px;">나의 투구 폼이나 타격 폼이 어떤 프로 선수와 닮았는지 지금 바로 확인해 보세요!</p>
+                    <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                        <a href="{{ url_for('main.upload_pitch') }}" class="btn-edit" style="background-color: #1976d2; color: white; border: none;">투구 폼 분석하기</a>
+                        <a href="{{ url_for('main.upload_hit') }}" class="btn-edit" style="background-color: #d32f2f; color: white; border: none;">타격 폼 분석하기</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div id="cardModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+    <div style="position:relative; max-width:400px; width:90%; text-align:center;">
+        <button onclick="document.getElementById('cardModal').style.display='none'" style="position:absolute; top:-45px; right:-10px; background:transparent; border:none; color:#fff; font-size:2.5rem; cursor:pointer;">&times;</button>
+        <img id="modalCardImg" src="" style="max-width:100%; max-height:80vh; border-radius:25px; box-shadow:0 10px 40px rgba(0,0,0,0.5); object-fit:contain;">
+    </div>
+</div>
+
+<script>
+    function showCard(imgUrl) {
+        document.getElementById('modalCardImg').src = imgUrl;
+        document.getElementById('cardModal').style.display = 'flex';
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PitchTypes - 나의 투구폼 분석</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <script>
+        (function() {
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+</head>
+<body>
+    <div id="overlay" class="overlay"></div>
+
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('main.index') }}" style="text-decoration: none;">
+                <span class="brand-name" style="color: var(--text-primary);">Menu</span>
+            </a>
+            <button id="close-sidebar" class="close-btn" style="color: var(--text-primary);">&times;</button>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('main.upload_pitch') }}" class="sidebar-link">투구 폼 분석</a>
+            <a href="{{ url_for('main.upload_hit') }}" class="sidebar-link">타격 폼 분석</a>
+            <a href="{{ url_for('main.ranking') }}" class="sidebar-link">랭킹 화면</a>
+            <a href="{{ url_for('main.battle') }}" class="sidebar-link">고스트 배틀</a>
+            <a href="{{ url_for('main.roster') }}" class="sidebar-link">선수 명단</a>
+        </nav>
+        <div class="sidebar-footer">
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('auth.logout') }}" class="sidebar-link logout-btn">
+                <img src="{{ url_for('static', filename='images/logout_icon.png') }}" class="sidebar-icon logout-red" alt="logout">
+                <span>로그아웃</span>
+            </a>
+            {% endif %}
+            <a href="{{ url_for('main.settings') }}" class="sidebar-link settings-btn">
+                <img src="{{ url_for('static', filename='images/settings_icon.png') }}" class="sidebar-icon" alt="settings">
+                <span>설정</span>
+            </a>
+        </div>
+    </div>
+
+    <header class="navbar">
+        <div class="nav-left">
+            <div id="menu-toggle" class="menu-icon">
+                <span style="background-color: var(--text-primary);"></span>
+                <span style="background-color: var(--text-primary);"></span>
+                <span style="background-color: var(--text-primary);"></span>
+            </div>
+            <a href="{{ url_for('main.index') }}" style="text-decoration: none;">
+                <span class="brand-name" style="color: var(--text-primary);">PitchTypes</span>
+            </a>
+        </div>
+        <div class="nav-right">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('main.mypage', nickname=current_user.nickname) }}" class="user-profile">
+                    <img src="{{ url_for('static', filename='uploads/profiles/' ~ current_user.profile_image) }}" alt="Profile" class="nav-icon" style="border-color: var(--text-primary);" onerror="this.src='{{ url_for('static', filename='images/default_logo.png') }}'">
+                </a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="nav-link" style="color: var(--text-primary);">가입/로그인</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="flash-messages" style="max-width: 400px; margin: 20px auto 0; text-align: center;">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul style="list-style: none; padding: 0;">
+                {% for message in messages %}
+                    <li style="padding: 12px; background-color: var(--hover-bg); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 8px; font-size: 0.95rem;">
+                        {{ message }}
+                    </li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    {% block content %}
+    {% endblock %}
+
+    <script>
+        const menuToggle = document.getElementById('menu-toggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const closeBtn = document.getElementById('close-sidebar');
+
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.add('active');
+            overlay.classList.add('active');
+        });
+
+        const hideSidebar = () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        };
+
+        closeBtn.addEventListener('click', hideSidebar);
+        overlay.addEventListener('click', hideSidebar);
+    </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .settings-wrapper {
+        width: 100%;
+        max-width: 600px;
+        margin: 20px auto;
+        background-color: var(--hover-bg);
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    [data-theme='dark'] .settings-wrapper {
+        background-color: #222222;
+    }
+    .settings-title {
+        font-size: 1.4rem;
+        color: var(--text-primary);
+        margin-bottom: 30px;
+        padding-left: 12px;
+        border-left: 4px solid var(--text-primary);
+        line-height: 1.2;
+    }
+    .setting-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 0;
+        border-top: 1px solid var(--divider-color);
+        border-bottom: 1px solid var(--divider-color);
+    }
+</style>
+
+<div class="settings-wrapper">
+    <h2 class="settings-title">설정</h2>
+    
+    <div class="setting-item">
+        <span style="font-size: 1.1rem; color: var(--text-primary);">다크 모드</span>
+        <label class="switch">
+            <input type="checkbox" id="theme-toggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+</div>
+
+<script>
+    const themeToggle = document.getElementById('theme-toggle');
+    
+    if (document.documentElement.getAttribute('data-theme') === 'dark') {
+        themeToggle.checked = true;
+    }
+
+    themeToggle.addEventListener('change', function(e) {
+        if (e.target.checked) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,43 @@
+# Python 관련
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+build/
+dist/
+
+# Flask 및 환경 설정 관련
+.env
+.flaskenv
+instance/
+.pytest_cache/
+
+# 머신러닝 모델 및 데이터
+UIUX/ml_models/*.pt
+UIUX/ml_models/*.h5
+UIUX/ml_models/*.weights
+UIUX/ml_models/*.pkl
+UIUX/*.pt
+UIUX/data/*.csv
+UIUX/data/*.json
+!data/.gitkeep
+
+# 사용자 업로드 파일 및 분석 결과
+UIUX/app/static/uploads/*
+UIUX/app/static/images/*
+!UIUX/app/static/images/pitchers
+!UIUX/app/static/images/hitters
+UIUX/app/static/results/*
+!UIUX/app/static/uploads/.gitkeep
+!UIUX/app/static/results/.gitkeep
+
+# 데이터베이스 관련
+UIUX/*.db
+
+# OS 및 에디터 관련
+.DS_Store
+.vscode/
+.idea/
+*.log
