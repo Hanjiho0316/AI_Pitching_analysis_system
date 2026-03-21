@@ -24,6 +24,7 @@ BATCH_SIZE = 64
 EPOCHS = 300
 K_FOLDS = 5
 
+# 필요시 True 로 변경
 USE_AUGMENTATION = False   # True: 데이터 증강 사용, False: 원본 데이터만 사용
 
 MODEL_SAVE_DIR = r"C:\Users\kccistc\Documents\project\pitch_clips\yolo_exp"
@@ -38,13 +39,14 @@ def augment_pitching_data_hard(X, y):
     augmented_X = [X]
     augmented_y = [y]
 
-    # 1. 가우시안 노이즈 (강도 0.015)
-    noise = np.random.normal(0, 0.015, X.shape)
+    # 필요하지 않은 증강은 코멘트아웃으로 제외시킬 수 잇음
+    # 1. 가우시안 노이즈 
+    noise = np.random.normal(0, 0.015, X.shape) # (강도 0.015)
     augmented_X.append(X + noise)
     augmented_y.append(y)
 
     # 2. 무작위 회전 (y축 기준 ±10도)
-    # -> 삭제 (z축 없음)
+    # -> 삭제 (z축 없음), 기록용으로 코멘트 아웃
     # def rotate_y(batch, angle_deg):
     #     angle_rad = np.radians(angle_deg)
     #     cos_a, sin_a = np.cos(angle_rad), np.sin(angle_rad)
@@ -57,8 +59,8 @@ def augment_pitching_data_hard(X, y):
     # augmented_X.append(rotated_X)
     # augmented_y.append(y)
 
-    # 3. 무작위 스케일링 (80% ~ 120%)
-    scales = np.random.uniform(0.8, 1.2, (len(X), 1, 1, 1))
+    # 3. 무작위 스케일링 
+    scales = np.random.uniform(0.8, 1.2, (len(X), 1, 1, 1)) # (80% ~ 120%)
     scaled_X = X * scales
     augmented_X.append(scaled_X)
     augmented_y.append(y)
@@ -180,11 +182,7 @@ def build_model(num_classes):
     x = layers.Conv1D(64, kernel_size=3, padding='same', activation='relu')(x)
     x = layers.BatchNormalization()(x)
     
-    # x = layers.Conv1D(32, kernel_size=3, padding='same', activation='relu')(x)
-    # x = layers.BatchNormalization()(x)
     x = layers.GlobalAveragePooling1D()(x) # 뽑은 feature를 평균값내서 보냄, 제일 마지막에 있어야됨
-    
-    
     
     outputs = layers.Dense(num_classes, activation='softmax')(x)
     
