@@ -23,13 +23,15 @@ SMOOTHING_WINDOW = 5
 # ==============================
 # Load models once at startup
 # ==============================
+
+# inference_config.json 에서 MAX_FRAME, NUM_JOINTS, CHANNELS 읽어와서 유저 비디오의 전처리를 학습 형식과 동일하게 
 with open(CONFIG_PATH) as f:
     config = json.load(f)
-
 MAX_FRAMES = config["MAX_FRAMES"]
 NUM_JOINTS  = config["NUM_JOINTS"]
 CHANNELS    = config["CHANNELS"]
 
+# 학습 모델 (.h5), LabelEncoder (.pkl), YOLO 모델 불러옴
 model = tf.keras.models.load_model(MODEL_PATH)
 le    = joblib.load(ENCODER_PATH)
 yolo  = YOLO(YOLO_MODEL_PATH)
@@ -37,11 +39,15 @@ yolo  = YOLO(YOLO_MODEL_PATH)
 # ==============================
 # Pose extraction (matches pitcher_extract_yolo.py)
 # ==============================
+
+# 약식 버전 video_extract_interpolation_pitcher.py
+# extracts coordinates from user's video
 def extract_pose_from_video(video_path):
     cap = cv2.VideoCapture(video_path)
     width  = int(cap.get(3))
     height = int(cap.get(4))
 
+    # ROI setting
     ROI_X1, ROI_X2 = int(width * 0.3),  int(width * 0.65)
     ROI_Y1, ROI_Y2 = int(height * 0.3), int(height * 0.8)
 
@@ -51,7 +57,7 @@ def extract_pose_from_video(video_path):
         ret, frame = cap.read()
         if not ret:
             break
-
+    
         results = yolo.track(frame, persist=True, conf=0.3, verbose=False)[0]
         frame_data = [np.nan] * (len(JOINT_INDICES) * 3)
 
@@ -74,12 +80,16 @@ def extract_pose_from_video(video_path):
                 temp_data    = []
                 for idx in JOINT_INDICES:
                     x, y, conf = points[idx]
+                    # 
                     if conf > 0.1:
                         temp_data.extend([x / width, y / height, conf])
+                      
+                    # set data to NaN if confidence is less than 0.1
                     else:
                         temp_data.extend([np.nan, np.nan, conf])
                 frame_data = temp_data
-
+              
+            # re-acquire pitcher ID if lost for 5 + frames
             elif pitcher_id is not None:
                 lost_frames += 1
                 if lost_frames > 5:
@@ -89,6 +99,7 @@ def extract_pose_from_video(video_path):
 
     cap.release()
 
+    # apply linear interpolation to NaN values
     cols = []
     for name in JOINT_NAMES:
         cols.extend([f"{name}_x", f"{name}_y", f"{name}_conf"])
@@ -104,41 +115,16 @@ def extract_pose_from_video(video_path):
 # ==============================
 # Preprocess (compatible with YOLO CSV: x, y, conf — no z/vis)
 # ==============================
-# def preprocess(df):
-#     x_cols    = [f"{n}_x"    for n in JOINT_NAMES]
-#     y_cols    = [f"{n}_y"    for n in JOINT_NAMES]
-#     conf_cols = [f"{n}_conf" for n in JOINT_NAMES]
 
-#     coords = np.stack([
-#         df[x_cols].values,
-#         df[y_cols].values,
-#         np.zeros((len(df), NUM_JOINTS))   # z = 0 (not available)
-#     ], axis=-1)                            # (T, 13, 3)
-
-#     vis = df[conf_cols].values             # (T, 13) — use conf as visibility proxy
-
-#     # Hip-center normalization (joints 7=L_HIP, 8=R_HIP)
-#     hip_center = (coords[:, 7, :] + coords[:, 8, :]) / 2
-#     for f in range(coords.shape[0]):
-#         coords[f] -= hip_center[f]
-
-#         combined = np.concatenate([coords, np.expand_dims(vis, axis=-1)], axis=-1)  # (T, 13, 4)
-
-#     # Pad or trim to MAX_FRAMES
-#     if len(combined) > MAX_FRAMES:
-#         combined = combined[:MAX_FRAMES]
-#     else:
-#         pad = np.zeros((MAX_FRAMES - len(combined), NUM_JOINTS, CHANNELS))
-#         combined = np.vstack([combined, pad])
-
-#     return combined.astype('float32')
+# pitcher_learning.py 의 preprocess 참고
 def preprocess(df):
     x_cols    = [f"{n}_x"    for n in JOINT_NAMES]
     y_cols    = [f"{n}_y"    for n in JOINT_NAMES]
     conf_cols = [f"{n}_conf" for n in JOINT_NAMES]
 
+    
     coords = np.stack([df[x_cols].values, df[y_cols].values], axis=-1)  # (T, 13, 2)
-    conf   = df[conf_cols].values                                         # (T, 13)
+    conf   = df[conf_cols].values                                       # (T, 13)
 
     hip_center = (coords[:, 7, :] + coords[:, 8, :]) / 2
     for f in range(coords.shape[0]):
@@ -146,7 +132,8 @@ def preprocess(df):
 
     deltas = np.diff(coords, axis=0, prepend=coords[0:1])
     deltas *= np.expand_dims(conf, axis=-1)
-
+  
+    # 반드시 학습코드의 파라미터와 동일해야함
     combined = np.concatenate([coords, deltas], axis=-1)  # (T, 13, 4)
 
     if len(combined) > MAX_FRAMES:
@@ -160,17 +147,20 @@ def preprocess(df):
 # Predict
 # ==============================
 def predict(video_path):
+    # Extract
     print(f"[1/3] Extracting pose from: {video_path}")
     df = extract_pose_from_video(video_path)
 
+    # Preprocess
     print("[2/3] Preprocessing...")
     X = preprocess(df)
     X = np.expand_dims(X, axis=0)  # (1, 80, 13, 4)
 
+    # Classify
     print("[3/3] Running inference...")
     probs = model.predict(X, verbose=0)[0]
 
-    print("\n📊 All Results (sorted by confidence):")
+    print("\n Results (sorted by confidence):")
     sorted_indices = np.argsort(probs)[::-1]
     for idx in sorted_indices:
         print(f"  {le.classes_[idx]:<30} {probs[idx]*100:5.1f}%")
@@ -179,6 +169,7 @@ def predict(video_path):
     return {"pitcher": le.classes_[top1_idx], "confidence": round(float(probs[top1_idx]) * 100, 1)}
 
 
+# allows runnign from terminal
 if __name__ == "__main__":
     import sys
     video = sys.argv[1] if len(sys.argv) > 1 else "test.mp4"
