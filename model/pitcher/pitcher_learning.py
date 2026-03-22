@@ -125,29 +125,41 @@ def robust_preprocess(df):
     y_cols = [c for c in df.columns if '_y' in c.lower()][:NUM_JOINTS]
     conf_cols = [c for c in df.columns if '_conf' in c.lower()][:NUM_JOINTS]
 
+    # Extractx xyz coords & confidence for 13 joints
+    # then list thme up
     coords = np.stack([df[x_cols].values, df[y_cols].values], axis=-1)  # (frames, joints, 2)
     conf = df[conf_cols].values  # (frames, joints)
-
+    
+    # hip-centering
+    # --> midpoint of left & right hip then subtracts it from all joints in every frame
+    #     --> position invariant (removes effect from differenct camera positions)
     hip_center = (coords[:, 7, :] + coords[:, 8, :]) / 2
     for f in range(coords.shape[0]):
         coords[f] -= hip_center[f]
 
+    # delta = frame-to-frame velocity
     deltas = np.diff(coords, axis=0, prepend=coords[0:1, :, :])
+    # masked by visibility --> missing joints dont produce false delta
     deltas *= np.expand_dims(conf, axis=-1)
 
+    # concatenates coordinates & deltas --> 4 channels per joints
     return np.concatenate([coords, deltas], axis=-1)  # (frames, joints, 4)
 
 def load_pitching_dataset(root_path):
     x_data, y_labels = [], []
     pitcher_folders = sorted([d for d in os.listdir(root_path) if os.path.isdir(os.path.join(root_path, d))])
-    
+
+    # iterates through each pitcher's susfolder, reads csv files
     for folder_name in pitcher_folders:
         class_dir = os.path.join(root_path, folder_name)
         csv_files = [f for f in os.listdir(class_dir) if f.endswith('.csv')]
         for file in csv_files:
             try:
+                # skips files that are too short ( < 15frames )
                 df = pd.read_csv(os.path.join(class_dir, file)).fillna(0)
                 if len(df) < 15: continue
+
+                # apply preprocess
                 combined = robust_preprocess(df)
                 if len(combined) > MAX_FRAMES: combined = combined[:MAX_FRAMES]
                 else:
@@ -156,16 +168,29 @@ def load_pitching_dataset(root_path):
                 x_data.append(combined)
                 y_labels.append(folder_name)
             except: pass
+
+    # return all samples as "numpy array & pitcher name" as labels
     return np.array(x_data, dtype='float32'), np.array(y_labels)
 
 # ==============================
 # 4. 모델 빌드 (적정 깊이 유지 + 규제 강화)
 # ==============================
 def build_model(num_classes):
+
+    # defines input shape,
+    # tells which shpae of data (60 frame, 13 joints, 4 channels) is coming in
     inputs = layers.Input(shape=(MAX_FRAMES, NUM_JOINTS, CHANNELS))
+
+    # flatten last two dimensions from (60, 13, 4) --> (60, 52)
+    # why? conv1D expects 2D input
     x = layers.Reshape((MAX_FRAMES, NUM_JOINTS * CHANNELS))(inputs)
     
     # Conv Block 1
+    #     256 convolutional filters
+    #     3 kernels --> detects local temporal pattern over 3 frames
+    #     padding = 'same' --> input length == output length
+    #     Relu
+    #     l2 = 0.05 (preventing overfitting)
     x = layers.Conv1D(256, kernel_size=3, padding='same', activation='relu',
                   kernel_regularizer=regularizers.l2(0.05))(x)
     
@@ -199,9 +224,10 @@ num_classes = len(le.classes_)
 # LabelEncoder 저장
 joblib.dump(le, os.path.join(MODEL_SAVE_DIR, "label_encoder.pkl"))
 
-# One-hot 인코딩 변환 (Label Smoothing을 위해 필수)
+# One-hot 인코딩 변환 (for Label Smoothing)
 y_onehot = tf.keras.utils.to_categorical(y_int, num_classes=num_classes)
 
+# splits data into N folds
 skf = StratifiedKFold(n_splits=K_FOLDS, shuffle=True, random_state=42)
 fold_no = 1
 accuracies = []
